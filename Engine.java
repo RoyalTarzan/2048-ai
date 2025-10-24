@@ -28,7 +28,6 @@ public class Engine {
                             board[i][j]=board[i][j-1];
                             board[i][j-1]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                     }else if (board[i][j+1]==board[i][j]){
                         board[i][j+1]=board[i][j]*2;
                         board[i][j]=0;
@@ -37,13 +36,9 @@ public class Engine {
                             board[i][j-1]=0;
                         }
                         points+=board[i][j+1];
-                        System.out.println(Arrays.deepToString(board));
-                    }else {
-                        System.out.println(Arrays.deepToString(board));
                     }
                 }   catch (ArrayIndexOutOfBoundsException e){
                     board[i][j]=board[i][j];
-                    System.out.println(Arrays.deepToString(board));
                 }
             }
         }
@@ -63,7 +58,6 @@ public class Engine {
                             board[i][j]=board[i][j+1];
                             board[i][j+1]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                     }else if (board[i][j-1]==board[i][j]){
                         board[i][j-1]=board[i][j]*2;
                         board[i][j]=0;
@@ -72,13 +66,9 @@ public class Engine {
                             board[i][j+1]=0;
                         }
                         points+=board[i][j-1];
-                        System.out.println(Arrays.deepToString(board));
-                    }else {
-                        System.out.println(Arrays.deepToString(board));
                     }
                 }   catch (ArrayIndexOutOfBoundsException e){
                     board[i][j]=board[i][j];
-                    System.out.println(Arrays.deepToString(board));
                 }
             }
         }
@@ -98,7 +88,6 @@ public class Engine {
                             board[i][j]=board[i-1][j];
                             board[i-1][j]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                     }else if (board[i+1][j]==board[i][j]){
                         board[i+1][j]=board[i][j]*2;
                         board[i][j]=0;
@@ -107,13 +96,9 @@ public class Engine {
                             board[i-1][j]=0;
                         }
                         points+=board[i+1][j];
-                        System.out.println(Arrays.deepToString(board));
-                    }else {
-                        System.out.println(Arrays.deepToString(board));
                     }
                 }   catch (ArrayIndexOutOfBoundsException e){
                     board[i][j]=board[i][j];
-                    System.out.println(Arrays.deepToString(board));
                 }
             }
         }
@@ -133,7 +118,6 @@ public class Engine {
                             board[i][j]=board[i+1][j];
                             board[i+1][j]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                     }else if (board[i-1][j]==board[i][j]){
                         board[i-1][j]=board[i][j]*2;
                         board[i][j]=0;
@@ -142,13 +126,9 @@ public class Engine {
                             board[i+1][j]=0;
                         }
                         points+=board[i-1][j];
-                        System.out.println(Arrays.deepToString(board));
-                    }else {
-                        System.out.println(Arrays.deepToString(board));
                     }
                 }   catch (ArrayIndexOutOfBoundsException e){
                     board[i][j]=board[i][j];
-                    System.out.println(Arrays.deepToString(board));
                 }
             }
         }
