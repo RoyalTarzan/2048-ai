@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Random;
 
 public class Engine {
     int[][] board=new int[][]{
@@ -14,6 +15,10 @@ public class Engine {
 
     public void setBoard(int[][] board){
         this.board=board;
+    }
+
+    public int getPoints() {
+        return points;
     }
 
     public void moveRight(){
@@ -43,6 +48,7 @@ public class Engine {
             }
         }
         System.out.println(Arrays.deepToString(board)+"\npoints="+points);
+        random2or4();
         setBoard(board);
     }
 
@@ -73,6 +79,7 @@ public class Engine {
             }
         }
         System.out.println(Arrays.deepToString(board)+"\npoints="+points);
+        random2or4();
         setBoard(board);
     }
 
@@ -103,6 +110,7 @@ public class Engine {
             }
         }
         System.out.println(Arrays.deepToString(board)+"\npoints="+points);
+        random2or4();
         setBoard(board);
     }
 
@@ -133,6 +141,34 @@ public class Engine {
             }
         }
         System.out.println(Arrays.deepToString(board)+"\npoints="+points);
+        random2or4();
         setBoard(board);
+    }
+
+    private void lose(){
+
+    }
+
+    public void random2or4(){
+        Random random=new Random();
+        if (random.nextInt(0,10)<9){
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    if (random.nextBoolean()&&board[i][j]==0){
+                        board[i][j]=2;
+                        return;
+                    }
+                }
+            }
+        }else {
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    if (random.nextBoolean()&&board[i][j]==0){
+                        board[i][j]=4;
+                        return;
+                    }
+                }
+            }
+        }
     }
 }
