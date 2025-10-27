@@ -5,11 +5,13 @@ import java.awt.event.KeyListener;
 
 public class Window extends JFrame implements KeyListener {
     private final Engine engine=new Engine();
-    private JLabel[][] labels=new JLabel[][]{
+    private final JLabel label=new JLabel();
+    private final JLabel[][] labels=new JLabel[][]{
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()}};
+    private final JLabel points=new JLabel();
 
     public Window(){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -19,10 +21,12 @@ public class Window extends JFrame implements KeyListener {
         this.setSize(500,500);
         engine.random2or4();
 
-        JLabel label = new JLabel();
         label.setBounds(30,30,400,400);
         label.setBackground(Color.black);
         label.setOpaque(true);
+        points.setBounds(30,0,400,30);
+        points.setBackground(Color.cyan);
+        points.setOpaque(true);
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -32,6 +36,7 @@ public class Window extends JFrame implements KeyListener {
                 label.add(labels[i][j]);
             }
         }
+        this.add(points);
         this.addKeyListener(this);
         this.add(label);
         this.setVisible(true);
@@ -57,6 +62,11 @@ public class Window extends JFrame implements KeyListener {
             for (int j = 0; j < 4; j++) {
                 labels[j][i].setText(String.valueOf(board[i][j]));
             }
+        }
+        points.setText(String.valueOf(engine.getPoints()));
+        if (engine.lose()){
+            label.setText("You Lost!");
+            engine.reset();
         }
     }
 

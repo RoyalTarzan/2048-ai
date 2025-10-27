@@ -49,7 +49,6 @@ public class Engine {
         }
         System.out.println(Arrays.deepToString(board)+"\npoints="+points);
         random2or4();
-        setBoard(board);
     }
 
     public void moveLeft() {
@@ -80,7 +79,6 @@ public class Engine {
         }
         System.out.println(Arrays.deepToString(board)+"\npoints="+points);
         random2or4();
-        setBoard(board);
     }
 
     public void moveDown() {
@@ -111,7 +109,6 @@ public class Engine {
         }
         System.out.println(Arrays.deepToString(board)+"\npoints="+points);
         random2or4();
-        setBoard(board);
     }
 
     public void moveUp() {
@@ -142,33 +139,80 @@ public class Engine {
         }
         System.out.println(Arrays.deepToString(board)+"\npoints="+points);
         random2or4();
-        setBoard(board);
     }
 
-    private void lose(){
-
-    }
-
-    public void random2or4(){
-        Random random=new Random();
-        if (random.nextInt(0,10)<9){
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < 4; j++) {
-                    if (random.nextBoolean()&&board[i][j]==0){
-                        board[i][j]=2;
-                        return;
+    public boolean lose(){
+        if (lowest()==0){
+            return false;
+        }
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                try{
+                    if (board[i][j]!=board[i][j+1]||board[i][j+1]!=0){
+                        return true;
+                    }
+                }catch (ArrayIndexOutOfBoundsException e){
+                    if (board[i][j]!=board[i][j-1]||board[i][j-1]!=0){
+                        return true;
                     }
                 }
-            }
-        }else {
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < 4; j++) {
-                    if (random.nextBoolean()&&board[i][j]==0){
-                        board[i][j]=4;
-                        return;
+                try {
+                    if (board[i][j]!=board[i+1][j]||board[i+1][j]!=0){
+                        return true;
+                    }
+                }catch (ArrayIndexOutOfBoundsException e){
+                    if (board[i][j]!=board[i-1][j]||board[i-1][j]!=0){
+                        return true;
                     }
                 }
             }
         }
+        return false;
+    }
+
+    public void random2or4(){
+        int[][] oldBoard=board;
+        Random random=new Random();
+        if (lowest()==0){
+            if (random.nextInt(0,10)<9){
+                for (int i = 0; i < 4; i++) {
+                    for (int j = 0; j < 4; j++) {
+                        if (random.nextInt(0,16)==1&&board[i][j]==0){
+                            board[i][j]=2;
+                            return;
+                        }
+                    }
+                }
+            }else {
+                for (int i = 0; i < 4; i++) {
+                    for (int j = 0; j < 4; j++) {
+                        if (random.nextInt(0,16)==1&&board[i][j]==0){
+                            board[i][j]=4;
+                            return;
+                        }
+                    }
+                }
+            }
+            if (oldBoard==board){
+                random2or4();
+            }
+        }
+    }
+
+    public void reset(){
+        board=new int[][]{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+        points=0;
+    }
+
+    private int lowest(){
+        int lowest=board[0][0];
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (board[i][j]<lowest){
+                    lowest=board[i][j];
+                }
+            }
+        }
+        return lowest;
     }
 }
