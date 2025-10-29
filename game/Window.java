@@ -1,3 +1,7 @@
+package game;
+
+import agent.Agent;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -12,9 +16,11 @@ public class Window extends JFrame implements KeyListener {
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()}};
     private final JLabel points=new JLabel();
+    private int numberOfAgents=0;
 
     public Window(){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this.setTitle("Main Window");
         this.setBackground(Color.cyan);
         this.setOpacity(1.0f);
         this.setLayout(null);
@@ -44,7 +50,13 @@ public class Window extends JFrame implements KeyListener {
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+        if ("a".equals(String.valueOf(e.getKeyChar()))){
+            new Agent(numberOfAgents);
+            numberOfAgents++;
+            this.requestFocus();
+        }
+    }
 
     @Override
     public void keyPressed(KeyEvent e) {
