@@ -8,7 +8,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 public class Window extends JFrame implements KeyListener {
-    private final Engine engine=new Engine();
+    public final Engine engine=new Engine();
     private final JLabel label=new JLabel();
     private final JLabel[][] labels=new JLabel[][]{
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
