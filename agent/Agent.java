@@ -55,15 +55,12 @@ public class Agent {
                     neurons.get(rand1).connections.set(rand2,neurons.size()+1);
                     neurons.add(new Neuron(0,connections,weights));break;
                 case 1:
-                    neurons.get(rand1).bias+=new Random().nextInt(-5,5);
-                    if (neurons.get(rand1).bias<-20){
-                        neurons.get(rand1).bias=-20;
-                    }
+                    neurons.get(rand1).bias+=new Random().nextFloat(-1,1);
                     break;
                 case 2:
                     for (int i = 0; i < rand3; i++) {
                         if (new Random().nextInt(0,5)==1) {
-                            neurons.get(rand1).weights.set(i, neurons.get(rand1).weights.get(i) + new Random().nextFloat(-1, 1));
+                            neurons.get(rand1).weights.set(i, neurons.get(rand1).weights.get(i) + new Random().nextFloat(-0.1f, 0.1f));
                             if (neurons.get(rand1).weights.get(i)<-1){
                                 neurons.get(rand1).weights.set(i,-1d);
                             }if (neurons.get(rand1).weights.get(i)>1){
@@ -72,7 +69,16 @@ public class Agent {
                         }
                     }
                     break;
-                case 3:break;
+                case 3:
+                    int rand4=new Random().nextInt(4,neurons.size());
+                    if (rand4!=rand1){
+                        for (int j = 0; j < neurons.get(rand4).connections.size(); j++) {
+                            if (rand1!=neurons.get(rand4).connections.get(j)){
+                                neurons.get(rand1).connections.add(rand4);
+                            }
+                        }
+                    }
+                    break;
             }
         }
     }
