@@ -1,5 +1,7 @@
 package agent;
 
+import game.Engine;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -9,15 +11,18 @@ public class Agent {
 
     public Agent(int agentNumber){
         ArrayList<Integer> connections=new ArrayList<>();
-        ArrayList<Double> weights=new ArrayList<>();
+        ArrayList<Float> weights=new ArrayList<>();
         for (int i = 4; i < 20; i++) {
             connections.add(i);
-            weights.add(new Random().nextDouble(-1,1));
+            weights.add(new Random().nextFloat(-1,1));
         }
         for (int i = 0; i < 4; i++) {
             neurons.add(new Neuron(new Random().nextFloat(),
                     connections,
                     weights));
+        }
+        for (int i = 4; i < 20; i++) {
+            neurons.add(new Neuron(new Random().nextFloat(),new ArrayList<>(),new ArrayList<>()));
         }
 
         agentWindow=new AgentWindow("Agent "+agentNumber);
@@ -37,6 +42,10 @@ public class Agent {
         mutate();
     }
 
+    public void visible(){
+        agentWindow.setVisible(false);
+    }
+
     public int getScore(){
         return agentWindow.engine.getPoints();
     }
@@ -46,10 +55,10 @@ public class Agent {
             int rand1=new Random().nextInt(0,neurons.size());
             int rand2=new Random().nextInt(0,neurons.get(rand1).connections.size());
             int rand3=new Random().nextInt(0,neurons.get(rand1).weights.size());
-            switch (new Random().nextInt(0,4)){
+            switch (new Random().nextInt(0,5)){
                 case 0:
-                    ArrayList<Double> weights=new ArrayList<>();
-                    weights.add(1d);
+                    ArrayList<Float> weights=new ArrayList<>();
+                    weights.add(1f);
                     ArrayList<Integer> connections=new ArrayList<>();
                     connections.add(neurons.get(rand1).connections.get(rand2));
                     neurons.get(rand1).connections.set(rand2,neurons.size()+1);
@@ -61,25 +70,34 @@ public class Agent {
                     for (int i = 0; i < rand3; i++) {
                         if (new Random().nextInt(0,5)==1) {
                             neurons.get(rand1).weights.set(i, neurons.get(rand1).weights.get(i) + new Random().nextFloat(-0.1f, 0.1f));
-                            if (neurons.get(rand1).weights.get(i)<-1){
-                                neurons.get(rand1).weights.set(i,-1d);
-                            }if (neurons.get(rand1).weights.get(i)>1){
-                                neurons.get(rand1).weights.set(i,1d);
-                            }
                         }
                     }
                     break;
                 case 3:
                     int rand4=new Random().nextInt(4,neurons.size());
+                    boolean add=false;
                     if (rand4!=rand1){
                         for (int j = 0; j < neurons.get(rand4).connections.size(); j++) {
-                            if (rand1!=neurons.get(rand4).connections.get(j)){
-                                neurons.get(rand1).connections.add(rand4);
+                            add= rand1 != neurons.get(rand4).connections.get(j);
+                        }
+                    }
+                    if (add) {
+                        neurons.get(rand1).connections.add(rand4);
+                    }
+                    break;
+                case 4:
+                    for (Neuron neuron : neurons) {
+                        for (int j = 0; j < neuron.connections.size(); j++) {
+                            if (j == rand2) {
+                                neurons.get(rand1).connections.remove(rand2);
                             }
                         }
                     }
-                    break;
             }
         }
+    }
+
+    public Engine getEngine(){
+        return agentWindow.engine;
     }
 }

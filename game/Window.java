@@ -8,14 +8,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 public class Window extends JFrame implements KeyListener {
-    public final Engine engine=new Engine();
-    private final JLabel label=new JLabel();
-    private final JLabel[][] labels=new JLabel[][]{
+    public static Engine engine=new Engine();
+    private static final JLabel label=new JLabel();
+    private static final JLabel[][] labels=new JLabel[][]{
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()}};
-    private final JLabel points=new JLabel();
+    private static final JLabel points=new JLabel();
     private int numberOfAgents=0;
 
     public Window(){
@@ -68,7 +68,7 @@ public class Window extends JFrame implements KeyListener {
         }
     }
 
-    private void update(){
+    public static void update(){
         int[][] board=engine.getBoard();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
