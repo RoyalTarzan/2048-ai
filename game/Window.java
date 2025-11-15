@@ -4,19 +4,26 @@ import agent.Agent;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
 
-public class Window extends JFrame implements KeyListener {
-    public static Engine engine=new Engine();
-    private static final JLabel label=new JLabel();
-    private static final JLabel[][] labels=new JLabel[][]{
+public class Window extends JFrame implements KeyListener,ActionListener {
+    public final Engine engine=new Engine();
+    private static JLabel label=new JLabel();
+    public final JLabel[][] labels=new JLabel[][]{
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()}};
-    private static final JLabel points=new JLabel();
+    public final JLabel points=new JLabel();
     private int numberOfAgents=0;
+    public ArrayList<Agent> agents=new ArrayList<>();
+    public ArrayList<JButton> buttons=new ArrayList<>();
+    public final JButton startButton=new JButton();
+    public final JButton resetButton=new JButton();
 
     public Window(){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -33,6 +40,10 @@ public class Window extends JFrame implements KeyListener {
         points.setBounds(30,0,400,30);
         points.setBackground(Color.cyan);
         points.setOpaque(true);
+        startButton.setBounds(430,0,50,25);
+        startButton.setVisible(true);
+        resetButton.setBounds(430,25,50,25);
+        resetButton.setVisible(true);
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -44,19 +55,17 @@ public class Window extends JFrame implements KeyListener {
         }
         this.add(points);
         this.addKeyListener(this);
+        startButton.addActionListener(this);
+        resetButton.addActionListener(this);
         this.add(label);
         this.setVisible(true);
+        this.add(resetButton);
+        this.add(startButton);
         update();
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {
-        if ("a".equals(String.valueOf(e.getKeyChar()))){
-            new Agent(numberOfAgents);
-            numberOfAgents++;
-            this.requestFocus();
-        }
-    }
+    public void keyTyped(KeyEvent e) {}
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -68,7 +77,7 @@ public class Window extends JFrame implements KeyListener {
         }
     }
 
-    public static void update(){
+    public void update(){
         int[][] board=engine.getBoard();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -78,10 +87,27 @@ public class Window extends JFrame implements KeyListener {
         points.setText(String.valueOf(engine.getPoints()));
         if (engine.lose()){
             label.setText("You Lost!");
-            engine.reset();
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {}
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource()==startButton){
+            for (int i = 0; i < 100; i++) {
+                agents.add(new Agent(numberOfAgents+1));
+                numberOfAgents++;
+                int finalI = i;
+                buttons.add(new JButton());
+                buttons.get(i).addActionListener((event)->{agents.get(finalI).visible();System.out.println("Yippee");});
+                buttons.get(i).setBounds(430,50+i*25,50,25);
+                this.requestFocus();
+                this.add(buttons.get(i));
+            }
+        } else if (e.getSource()==resetButton) {
+            engine.reset();
+        }
+    }
 }

@@ -1,6 +1,5 @@
 package game;
 
-import java.util.Arrays;
 import java.util.Random;
 
 public class Engine {
@@ -29,7 +28,6 @@ public class Engine {
     }
 
     public void moveRight(){
-        System.out.println(Arrays.deepToString(board));
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 try{
@@ -40,7 +38,6 @@ public class Engine {
                             board[i][j]=board[i][j-1];
                             board[i][j-1]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                     }else if (board[i][j+1]==board[i][j]&&!combined[i][j]){
                         board[i][j+1]=board[i][j]*2;
                         board[i][j]=0;
@@ -48,22 +45,18 @@ public class Engine {
                             board[i][j]=board[i][j-1];
                             board[i][j-1]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                         combined[i][j+1]=true;
                         points+=board[i][j+1];
                     }
                 }   catch (ArrayIndexOutOfBoundsException e){
                     board[i][j]=board[i][j];
-                    System.out.println(Arrays.deepToString(board));
                 }
             }
         }
-        System.out.println(Arrays.deepToString(board)+"\npoints="+points);
         random2or4();
     }
 
     public void moveLeft() {
-        System.out.println(Arrays.deepToString(board));
         for (int i = 0; i < 4; i++) {
             for (int j =3; j > -1; j--) {
                 try{
@@ -74,7 +67,6 @@ public class Engine {
                             board[i][j]=board[i][j+1];
                             board[i][j+1]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                     }else if (board[i][j-1]==board[i][j]&&!combined[i][j]){
                         board[i][j-1]=board[i][j]*2;
                         board[i][j]=0;
@@ -82,13 +74,11 @@ public class Engine {
                             board[i][j]=board[i][j+1];
                             board[i][j+1]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                         combined[i][j-1]=true;
                         points+=board[i][j-1];
                     }
                 }   catch (ArrayIndexOutOfBoundsException e){
                     board[i][j]=board[i][j];
-                    System.out.println(Arrays.deepToString(board));
                 }
             }
         }
@@ -97,12 +87,10 @@ public class Engine {
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false}};
-        System.out.println(Arrays.deepToString(board)+"\npoints="+points);
         random2or4();
     }
 
     public void moveDown() {
-        System.out.println(Arrays.deepToString(board));
         for (int i = 0; i < 4; i++) {
             for (int j =0; j < 4; j++) {
                 try{
@@ -113,7 +101,6 @@ public class Engine {
                             board[i][j]=board[i-1][j];
                             board[i-1][j]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                     }else if (board[i+1][j]==board[i][j]&&!combined[i][j]){
                         board[i+1][j]=board[i][j]*2;
                         board[i][j]=0;
@@ -121,13 +108,11 @@ public class Engine {
                             board[i][j]=board[i-1][j];
                             board[i-1][j]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                         combined[i+1][j]=true;
                         points+=board[i+1][j];
                     }
                 }   catch (ArrayIndexOutOfBoundsException e){
                     board[i][j]=board[i][j];
-                    System.out.println(Arrays.deepToString(board));
                 }
             }
         }
@@ -136,12 +121,10 @@ public class Engine {
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false}};
-        System.out.println(Arrays.deepToString(board)+"\npoints="+points);
         random2or4();
     }
 
     public void moveUp() {
-        System.out.println(Arrays.deepToString(board));
         for (int i = 3; i > -1; i--) {
             for (int j =0; j < 4; j++) {
                 try{
@@ -152,7 +135,6 @@ public class Engine {
                             board[i][j]=board[i+1][j];
                             board[i+1][j]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                     }else if (board[i-1][j]==board[i][j]&&!combined[i][j]){
                         board[i-1][j]=board[i][j]*2;
                         board[i][j]=0;
@@ -160,13 +142,11 @@ public class Engine {
                             board[i][j]=board[i+1][j];
                             board[i+1][j]=0;
                         }
-                        System.out.println(Arrays.deepToString(board));
                         combined[i-1][j]=true;
                         points+=board[i-1][j];
                     }
                 }   catch (ArrayIndexOutOfBoundsException e){
                     board[i][j]=board[i][j];
-                    System.out.println(Arrays.deepToString(board));
                 }
             }
         }
@@ -175,7 +155,6 @@ public class Engine {
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false}};
-        System.out.println(Arrays.deepToString(board)+"\npoints="+points);
         random2or4();
     }
 
