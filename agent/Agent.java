@@ -102,7 +102,7 @@ public class Agent {
                     break;
                 case 4:
                     //Remove neuron
-                    if (neurons.size()<=20){return;}
+                    if (neurons.size()<=20 && randNeuron<20){return;}
                     for (Neuron neuron:neurons){
                         if (neuron!=neurons.get(randNeuron)){
                             for (int connection: neuron.connections){
