@@ -11,15 +11,14 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 public class Window extends JFrame implements KeyListener,ActionListener {
-    public final Engine engine=new Engine();
-    private static JLabel label=new JLabel();
+    public Engine engine=new Engine();
+    private static final JLabel label=new JLabel();
     public final JLabel[][] labels=new JLabel[][]{
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()}};
     public final JLabel points=new JLabel();
-    private int numberOfAgents=0;
     public ArrayList<Agent> agents=new ArrayList<>();
     public ArrayList<JButton> buttons=new ArrayList<>();
     public final JButton startButton=new JButton();
@@ -97,11 +96,10 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==startButton){
             for (int i = 0; i < 100; i++) {
-                agents.add(new Agent(numberOfAgents+1));
-                numberOfAgents++;
+                agents.add(new Agent());
                 int finalI = i;
                 buttons.add(new JButton());
-                buttons.get(i).addActionListener((event)->{agents.get(finalI).visible();System.out.println("Yippee");});
+                buttons.get(i).addActionListener((event)->{engine=agents.get(finalI).getEngine();System.out.println("Yippee");});
                 buttons.get(i).setBounds(430,50+i*25,50,25);
                 this.requestFocus();
                 this.add(buttons.get(i));

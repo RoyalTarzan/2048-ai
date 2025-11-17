@@ -7,9 +7,10 @@ import java.util.Random;
 
 public class Agent {
     ArrayList<Neuron> neurons= new ArrayList<>(0);
-    AgentWindow agentWindow;
+    Engine engine=new Engine();
+    ArrayList<Neuron> sortedNeurons=new ArrayList<>();
 
-    public Agent(int agentNumber){
+    public Agent(){
         ArrayList<Integer> connections=new ArrayList<>();
         ArrayList<Float> weights=new ArrayList<>();
         for (int i = 4; i < 20; i++) {
@@ -24,8 +25,6 @@ public class Agent {
         for (int i = 4; i < 20; i++) {
             neurons.add(new Neuron(new Random().nextFloat(),new ArrayList<>(),new ArrayList<>()));
         }
-
-        agentWindow=new AgentWindow("Agent "+agentNumber);
     }
 
     public Agent(Agent parent1, Agent parent2){
@@ -42,8 +41,24 @@ public class Agent {
         mutate();
     }
 
+    private void sortNeurons(){
+        ArrayList<Neuron> copyOfneurons= (ArrayList<Neuron>) neurons.clone();
+        sortedNeurons.clear();
+        for (Neuron neuron:copyOfneurons){
+            if (!neuron.connections.equals(new ArrayList<Integer>())){continue;}
+            sortedNeurons.add(neuron);
+            for (Neuron neuron1:copyOfneurons){
+                if (neuron==neuron1){continue;}
+                for (int connection:neuron1.connections){
+                    if (connection!=copyOfneurons.indexOf(neuron)){continue;}
+                    neuron1.connections.remove((Integer) connection);
+                }
+            }
+        }
+    }
+
     public void outputMove(){
-        int biggest=0;
+        int biggest=Integer.MIN_VALUE;
         int currentNeuron = 0;
         for (int i = 0; i < 4; i++) {
             if (neurons.get(i).value > biggest){
@@ -58,67 +73,57 @@ public class Agent {
         }
     }
 
-    public void visible(){
-        agentWindow.setVisible(!agentWindow.isVisible());
-    }
-
     public int getScore(){
-        return agentWindow.engine.getPoints();
+        return engine.getPoints();
     }
 
     private void mutate(){
-        if (new Random().nextInt(0,100)<5){
-            int randNeuron=new Random().nextInt(0,neurons.size());
-            int randConnection=new Random().nextInt(0,neurons.get(randNeuron).connections.size());
-            int randWeight=new Random().nextInt(0,neurons.get(randNeuron).weights.size());
-            switch (new Random().nextInt(0,5)){
-                case 0:
-                    //Adds new neuron
-                    ArrayList<Float> weights=new ArrayList<>();
-                    weights.add(1f);
-                    ArrayList<Integer> connections=new ArrayList<>();
-                    connections.add(neurons.get(randNeuron).connections.get(randConnection));
-                    neurons.get(randNeuron).connections.set(randConnection,neurons.size()+1);
-                    neurons.add(new Neuron(0,connections,weights));break;
-                case 1:
-                    //changes bias
-                    neurons.get(randNeuron).bias+=new Random().nextFloat(-1,1);
-                    break;
-                case 2:
-                    //Changes 1 weight
-                    neurons.get(randNeuron).weights.set(randWeight, neurons.get(randNeuron).weights.get(randWeight) + new Random().nextFloat(-0.1f, 0.1f));
-                    break;
-                case 3:
-                    //Add connection
-                    int randNeuron2=new Random().nextInt(4,neurons.size());
-                    if (randNeuron2!=randNeuron){
-                        for (int j = 0; j < neurons.get(randNeuron2).connections.size(); j++) {
-                            if (randNeuron == neurons.get(randNeuron2).connections.get(j)){
-                                return;
-                            }
-                        }
+        if (new Random().nextInt(0,100)>5){return;}
+        int randNeuronIndex=new Random().nextInt(0,neurons.size());
+        int randConnectionIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).connections.size());
+        int randWeightIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).weights.size());
+        switch (new Random().nextInt(0,5)){
+            case 0:
+                //Adds new neuron
+                ArrayList<Float> weights=new ArrayList<>();
+                weights.add(1f);
+                ArrayList<Integer> connections=new ArrayList<>();
+                connections.add(neurons.get(randNeuronIndex).connections.get(randConnectionIndex));
+                neurons.get(randNeuronIndex).connections.set(randConnectionIndex,neurons.size()+1);
+                neurons.add(new Neuron(0,connections,weights));break;
+            case 1:
+                //changes bias
+                neurons.get(randNeuronIndex).bias+=new Random().nextFloat(-1,1);
+                break;
+            case 2:
+                //Changes 1 weight
+                neurons.get(randNeuronIndex).weights.set(randWeightIndex, neurons.get(randNeuronIndex).weights.get(randWeightIndex) + new Random().nextFloat(-0.1f, 0.1f));
+                break;
+            case 3:
+                //Add connection
+                int randNeuron2=new Random().nextInt(4,neurons.size());
+                if (randNeuron2==randNeuronIndex){break;}
+                for (int j = 0; j < neurons.get(randNeuron2).connections.size(); j++) {
+                    if (randNeuronIndex == neurons.get(randNeuron2).connections.get(j)){return;}
+                }
+                neurons.get(randNeuronIndex).connections.add(randNeuron2);
+                break;
+            case 4:
+                //Remove neuron
+                if (neurons.size()<=20 && randNeuronIndex<20){return;}
+                for (Neuron neuron:neurons){
+                    if (neuron==neurons.get(randNeuronIndex)){continue;}
+                    for (int connection: neuron.connections){
+                        if (neuron.connections.get(connection)!=randNeuronIndex){continue;}
+                        neuron.connections.remove(connection);
+                        neuron.weights.remove(connection);
                     }
-                    neurons.get(randNeuron).connections.add(randNeuron2);
-                    break;
-                case 4:
-                    //Remove neuron
-                    if (neurons.size()<=20 && randNeuron<20){return;}
-                    for (Neuron neuron:neurons){
-                        if (neuron!=neurons.get(randNeuron)){
-                            for (int connection: neuron.connections){
-                                if (neuron.connections.get(connection)==randNeuron){
-                                    neuron.connections.remove(connection);
-                                    neuron.weights.remove(connection);
-                                }
-                            }
-                        }
-                    }
-                    neurons.remove(randNeuron);
-            }
+                }
+                neurons.remove(randNeuronIndex);
         }
     }
 
     public Engine getEngine(){
-        return agentWindow.engine;
+        return engine;
     }
 }
