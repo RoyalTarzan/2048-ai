@@ -42,16 +42,17 @@ public class Agent {
     }
 
     private void sortNeurons(){
-        ArrayList<Neuron> copyOfneurons= (ArrayList<Neuron>) neurons.clone();
+        @SuppressWarnings("unchecked") ArrayList<Neuron> copyOfNeurons= (ArrayList<Neuron>) neurons.clone();
         sortedNeurons.clear();
-        for (Neuron neuron:copyOfneurons){
+        for (Neuron neuron:copyOfNeurons){
             if (!neuron.connections.equals(new ArrayList<Integer>())){continue;}
             sortedNeurons.add(neuron);
-            for (Neuron neuron1:copyOfneurons){
+            for (Neuron neuron1:copyOfNeurons){
                 if (neuron==neuron1){continue;}
                 for (int connection:neuron1.connections){
-                    if (connection!=copyOfneurons.indexOf(neuron)){continue;}
+                    if (connection!=copyOfNeurons.indexOf(neuron)){continue;}
                     neuron1.connections.remove((Integer) connection);
+                    neuron1.weights.remove(neuron1.connections.indexOf(connection));
                 }
             }
         }
@@ -82,7 +83,7 @@ public class Agent {
         int randNeuronIndex=new Random().nextInt(0,neurons.size());
         int randConnectionIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).connections.size());
         int randWeightIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).weights.size());
-        switch (new Random().nextInt(0,5)){
+        switch (new Random().nextInt(0,6)){
             case 0:
                 //Adds new neuron
                 ArrayList<Float> weights=new ArrayList<>();
@@ -101,25 +102,36 @@ public class Agent {
                 break;
             case 3:
                 //Add connection
-                int randNeuron2=new Random().nextInt(4,neurons.size());
-                if (randNeuron2==randNeuronIndex){break;}
-                for (int j = 0; j < neurons.get(randNeuron2).connections.size(); j++) {
-                    if (randNeuronIndex == neurons.get(randNeuron2).connections.get(j)){return;}
+                int randNeuronIndex2=new Random().nextInt(4,neurons.size());
+                if (randNeuronIndex2==randNeuronIndex){return;}
+                for (int connection:neurons.get(randNeuronIndex2).connections) {
+                    if (randNeuronIndex == connection){return;}
                 }
-                neurons.get(randNeuronIndex).connections.add(randNeuron2);
+                neurons.get(randNeuronIndex).connections.add(randNeuronIndex2);
                 break;
             case 4:
                 //Remove neuron
-                if (neurons.size()<=20 && randNeuronIndex<20){return;}
+                if (neurons.size()<=20 || randNeuronIndex<20){return;}
                 for (Neuron neuron:neurons){
                     if (neuron==neurons.get(randNeuronIndex)){continue;}
                     for (int connection: neuron.connections){
-                        if (neuron.connections.get(connection)!=randNeuronIndex){continue;}
-                        neuron.connections.remove(connection);
-                        neuron.weights.remove(connection);
+                        if (connection!=randNeuronIndex){continue;}
+                        neuron.connections.remove((Integer) connection);
+                        neuron.weights.remove(neuron.connections.indexOf(connection));
                     }
                 }
                 neurons.remove(randNeuronIndex);
+                break;
+            case 5:
+                //Remove connection
+                for (Neuron neuron:neurons){
+                    if (neurons.indexOf(neuron)==neurons.get(randNeuronIndex).connections.get(randConnectionIndex) || neuron==neurons.get(randNeuronIndex)){continue;}
+                    for (int connection:neuron.connections){
+                        if (connection==neurons.get(randNeuronIndex).connections.get(randConnectionIndex)){break;}
+                    }
+                }
+                neurons.get(randNeuronIndex).connections.remove(randConnectionIndex);
+                neurons.get(randNeuronIndex).weights.remove(randConnectionIndex);
         }
     }
 
