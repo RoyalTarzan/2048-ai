@@ -108,7 +108,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==startButton){
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 1; i++) {
                 agents.add(new Agent());
                 int finalI = i;
                 buttons.add(new JButton());
@@ -119,14 +119,14 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                     currentAgent=finalI;
                 });
                 buttons.get(i).setText("Agent "+finalI);
-                if (i<30){
+                if (50+(i*25)<this.getSize().getHeight()){
                     buttons.get(i).setBounds(430,50+i*25,100,25);
-                }else if (i<60){
-                    buttons.get(i).setBounds(530,50+(i-30)*25,100,25);
-                } else if (i<90) {
-                    buttons.get(i).setBounds(530,50+(i-60)*25,100,25);
+                }else if (50+(i-this.getSize().getHeight())*25<this.getSize().getHeight()){
+                    buttons.get(i).setBounds(530, (int) (50+(i-this.getSize().getHeight()/25)*25),100,25);
+                } else if (50+(i-2*(this.getSize().getHeight()-50)/25)*25<this.getSize().getHeight()) {
+                    buttons.get(i).setBounds(630, (int) (50+(i-(this.getSize().getHeight()-50)*2/25)*25),100,25);
                 }else{
-                    buttons.get(i).setBounds(530,50+(i-90)*25,100,25);
+                    buttons.get(i).setBounds(730, (int) (50+(i-(this.getSize().getHeight()-50)*3/25)*25),100,25);
                 }
                 this.requestFocus();
                 this.add(buttons.get(i));

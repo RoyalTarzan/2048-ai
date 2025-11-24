@@ -3,12 +3,13 @@ package agent;
 import game.Engine;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 
 public class Agent {
     ArrayList<Neuron> neurons= new ArrayList<>(0);
     Engine engine=new Engine();
-    ArrayList<Neuron> sortedNeurons=new ArrayList<>();
+    ArrayList<Integer> sortedNeurons=new ArrayList<>();
 
     public Agent(){
         ArrayList<Integer> connections=new ArrayList<>();
@@ -46,23 +47,37 @@ public class Agent {
     private void sortNeurons(){
         @SuppressWarnings("unchecked") ArrayList<Neuron> copyOfNeurons= (ArrayList<Neuron>) neurons.clone();
         sortedNeurons.clear();
-        for (Neuron neuron:copyOfNeurons){
-            if (!neuron.connections.equals(new ArrayList<Integer>())){continue;}
-            sortedNeurons.add(neuron);
-            for (Neuron neuron1:copyOfNeurons){
-                if (neuron==neuron1){continue;}
-                for (int connection:neuron1.connections){
-                    if (connection!=copyOfNeurons.indexOf(neuron)){continue;}
-                    neuron1.connections.remove((Integer) connection);
-                    neuron1.weights.remove(neuron1.connections.indexOf(connection));
+        while (!Objects.equals(copyOfNeurons, new ArrayList<>())) {
+            System.out.println("try");
+            for (Neuron neuron:copyOfNeurons) {
+                if (!neuron.connections.equals(new ArrayList<Integer>()) || sortedNeurons.contains(copyOfNeurons.indexOf(neuron))) {
+                    continue;
+                }
+                sortedNeurons.add(copyOfNeurons.indexOf(neuron));
+                for (Neuron neuron1 : copyOfNeurons) {
+                    if (neuron == neuron1) {
+                        continue;
+                    }
+                    System.out.println(copyOfNeurons.indexOf(neuron) + "\n" + neuron1.connections+ "\n"+copyOfNeurons.indexOf(neuron1));
+                    neuron1.connections.removeIf(connection -> connection == copyOfNeurons.indexOf(neuron));
+                    System.out.println(neuron1.connections);
                 }
             }
+            copyOfNeurons.removeIf(neuron -> neuron.connections.equals(new ArrayList<>()));
+        }
+        System.out.println(sortedNeurons);
+    }
+
+    public void calculateOutput(){
+        for (int neuronIndex:sortedNeurons){
+            neurons.get(neuronIndex).calculateValue(this);
         }
     }
 
     public void outputMove(){
-        calculateValues();
-        float biggest=neurons.getFirst().value;
+        sortNeurons();
+        calculateOutput();
+        float biggest=neurons.get(0).value;
         int currentNeuron = 0;
         for (int i = 0; i < 4; i++) {
             if (neurons.get(i).value > biggest){
@@ -77,12 +92,6 @@ public class Agent {
             case 1:engine.moveUp();
             case 2:engine.moveRight();
             case 3:engine.moveDown();
-        }
-    }
-
-    public void calculateValues(){
-        for (Neuron neuron:sortedNeurons){
-            neuron.calculateValue(this);
         }
     }
 
