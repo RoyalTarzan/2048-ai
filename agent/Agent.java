@@ -25,6 +25,7 @@ public class Agent {
         for (int i = 4; i < 20; i++) {
             neurons.add(new Neuron(new Random().nextFloat(),new ArrayList<>(),new ArrayList<>()));
         }
+        sortNeurons();
     }
 
     public Agent(Agent parent1, Agent parent2){
@@ -39,6 +40,7 @@ public class Agent {
         }
 
         mutate();
+        sortNeurons();
     }
 
     private void sortNeurons(){
@@ -59,18 +61,28 @@ public class Agent {
     }
 
     public void outputMove(){
-        int biggest=Integer.MIN_VALUE;
+        calculateValues();
+        float biggest=neurons.getFirst().value;
         int currentNeuron = 0;
         for (int i = 0; i < 4; i++) {
             if (neurons.get(i).value > biggest){
                 currentNeuron=i;
             }
+            System.out.println(neurons.get(i));
+            System.out.println(neurons.get(i).value);
+            System.out.println(biggest);
         }
         switch (currentNeuron){
-            case 0:getEngine().moveLeft();
-            case 1:getEngine().moveUp();
-            case 2:getEngine().moveRight();
-            case 3:getEngine().moveDown();
+            case 0:engine.moveLeft();
+            case 1:engine.moveUp();
+            case 2:engine.moveRight();
+            case 3:engine.moveDown();
+        }
+    }
+
+    public void calculateValues(){
+        for (Neuron neuron:sortedNeurons){
+            neuron.calculateValue(this);
         }
     }
 
@@ -91,7 +103,8 @@ public class Agent {
                 ArrayList<Integer> connections=new ArrayList<>();
                 connections.add(neurons.get(randNeuronIndex).connections.get(randConnectionIndex));
                 neurons.get(randNeuronIndex).connections.set(randConnectionIndex,neurons.size()+1);
-                neurons.add(new Neuron(0,connections,weights));break;
+                neurons.add(new Neuron(0,connections,weights));
+                break;
             case 1:
                 //changes bias
                 neurons.get(randNeuronIndex).bias+=new Random().nextFloat(-1,1);

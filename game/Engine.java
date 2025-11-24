@@ -15,6 +15,10 @@ public class Engine {
             {false,false,false,false}};
     int points=0;
 
+    public Engine(){
+        random2or4();
+    }
+
     public int[][] getBoard() {
         return board;
     }

@@ -23,6 +23,10 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     public ArrayList<JButton> buttons=new ArrayList<>();
     public final JButton startButton=new JButton();
     public final JButton resetButton=new JButton();
+    public final JButton updateButton=new JButton();
+    private int currentAgent;
+    public final JButton ownEngineButton=new JButton();
+    private Engine ownEngine;
 
     public Window(){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -30,8 +34,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         this.setBackground(Color.cyan);
         this.setOpacity(1.0f);
         this.setLayout(null);
-        this.setSize(500,500);
-        engine.random2or4();
+        this.setSize(Toolkit.getDefaultToolkit().getScreenSize());
 
         label.setBounds(30,30,400,400);
         label.setBackground(Color.black);
@@ -39,10 +42,18 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         points.setBounds(30,0,400,30);
         points.setBackground(Color.cyan);
         points.setOpaque(true);
-        startButton.setBounds(430,0,50,25);
+        startButton.setBounds(430,0,100,25);
+        startButton.setText("Start");
         startButton.setVisible(true);
-        resetButton.setBounds(430,25,50,25);
+        resetButton.setBounds(430,25,100,25);
+        resetButton.setText("Reset");
         resetButton.setVisible(true);
+        updateButton.setBounds(530,0,100,25);
+        updateButton.setText("Update");
+        updateButton.setVisible(true);
+        ownEngineButton.setBounds(530,25,100,25);
+        ownEngineButton.setText("Own Game");
+        ownEngineButton.setVisible(true);
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -56,10 +67,12 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         this.addKeyListener(this);
         startButton.addActionListener(this);
         resetButton.addActionListener(this);
+        updateButton.addActionListener(this);
         this.add(label);
         this.setVisible(true);
         this.add(resetButton);
         this.add(startButton);
+        this.add(updateButton);
         update();
     }
 
@@ -99,13 +112,30 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                 agents.add(new Agent());
                 int finalI = i;
                 buttons.add(new JButton());
-                buttons.get(i).addActionListener((event)->{engine=agents.get(finalI).getEngine();System.out.println("Yippee");});
-                buttons.get(i).setBounds(430,50+i*25,50,25);
+                buttons.get(i).addActionListener((event)->{
+                    engine=agents.get(finalI).getEngine();
+                    System.out.println("Yippee");
+                    update();
+                    currentAgent=finalI;
+                });
+                buttons.get(i).setText("Agent "+finalI);
+                if (i<30){
+                    buttons.get(i).setBounds(430,50+i*25,100,25);
+                }else if (i<60){
+                    buttons.get(i).setBounds(530,50+(i-30)*25,100,25);
+                } else if (i<90) {
+                    buttons.get(i).setBounds(530,50+(i-60)*25,100,25);
+                }else{
+                    buttons.get(i).setBounds(530,50+(i-90)*25,100,25);
+                }
                 this.requestFocus();
                 this.add(buttons.get(i));
             }
         } else if (e.getSource()==resetButton) {
             engine.reset();
+        } else if (e.getSource()==updateButton) {
+            agents.get(currentAgent).outputMove();
+            update();
         }
     }
 }
