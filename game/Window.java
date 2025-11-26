@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Window extends JFrame implements KeyListener,ActionListener {
     public Engine engine=new Engine();
@@ -114,7 +115,6 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                 buttons.add(new JButton());
                 buttons.get(i).addActionListener((event)->{
                     engine=agents.get(finalI).getEngine();
-                    System.out.println("Yippee");
                     update();
                     currentAgent=finalI;
                 });
@@ -134,7 +134,9 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         } else if (e.getSource()==resetButton) {
             engine.reset();
         } else if (e.getSource()==updateButton) {
+            agents.get(currentAgent).setEngine(engine);
             agents.get(currentAgent).outputMove();
+            System.out.println(Arrays.deepToString(agents.get(currentAgent).getEngine().board));
             update();
         }
     }

@@ -47,6 +47,7 @@ public class Agent {
     private void sortNeurons(){
         @SuppressWarnings("unchecked") ArrayList<Neuron> copyOfNeurons= (ArrayList<Neuron>) neurons.clone();
         sortedNeurons.clear();
+        ArrayList<Integer> removedNeuronIndex=new ArrayList<>();
         while (!Objects.equals(copyOfNeurons, new ArrayList<>())) {
             System.out.println("try");
             for (Neuron neuron:copyOfNeurons) {
@@ -62,8 +63,10 @@ public class Agent {
                     neuron1.connections.removeIf(connection -> connection == copyOfNeurons.indexOf(neuron));
                     System.out.println(neuron1.connections);
                 }
+                removedNeuronIndex.add(copyOfNeurons.indexOf(neuron));
             }
-            copyOfNeurons.removeIf(neuron -> neuron.connections.equals(new ArrayList<>()));
+            copyOfNeurons.removeIf(neuron -> removedNeuronIndex.contains(copyOfNeurons.indexOf(neuron)));
+            removedNeuronIndex.clear();
         }
         System.out.println(sortedNeurons);
     }
@@ -71,27 +74,28 @@ public class Agent {
     public void calculateOutput(){
         for (int neuronIndex:sortedNeurons){
             neurons.get(neuronIndex).calculateValue(this);
+            System.out.println(neuronIndex);
         }
     }
 
     public void outputMove(){
-        sortNeurons();
         calculateOutput();
         float biggest=neurons.get(0).value;
         int currentNeuron = 0;
         for (int i = 0; i < 4; i++) {
             if (neurons.get(i).value > biggest){
                 currentNeuron=i;
+                biggest=neurons.get(i).value;
             }
-            System.out.println(neurons.get(i));
-            System.out.println(neurons.get(i).value);
-            System.out.println(biggest);
+            System.out.print("Current neuron: "+neurons.get(i));
+            System.out.print(", value: "+neurons.get(i).value);
+            System.out.println(", biggest value: "+biggest+", current neuron: "+currentNeuron);
         }
         switch (currentNeuron){
-            case 0:engine.moveLeft();
-            case 1:engine.moveUp();
-            case 2:engine.moveRight();
-            case 3:engine.moveDown();
+            case 0:engine.moveLeft();System.out.println("Left");break;
+            case 1:engine.moveUp();System.out.println("Up");break;
+            case 2:engine.moveRight();System.out.println("Right");break;
+            case 3:engine.moveDown();System.out.println("Down");break;
         }
     }
 
@@ -159,5 +163,9 @@ public class Agent {
 
     public Engine getEngine(){
         return engine;
+    }
+
+    public void setEngine(Engine engine){
+        this.engine=engine;
     }
 }
