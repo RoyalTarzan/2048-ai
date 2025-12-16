@@ -13,18 +13,15 @@ public class Agent {
 
     public Agent(){
         ArrayList<Integer> connections=new ArrayList<>();
-        ArrayList<Float> weights=new ArrayList<>();
         for (int i = 4; i < 20; i++) {
             connections.add(i);
-            weights.add(new Random().nextFloat(-1,1));
         }
         for (int i = 0; i < 4; i++) {
-            neurons.add(new Neuron(new Random().nextFloat(),
-                    connections,
-                    weights));
+            neurons.add(new Neuron(new Random().nextFloat(-1,1),
+                    connections));
         }
         for (int i = 4; i < 20; i++) {
-            neurons.add(new Neuron(new Random().nextFloat(),new ArrayList<>(),new ArrayList<>()));
+            neurons.add(new Neuron(0,new ArrayList<>()));
         }
         sortNeurons();
     }
@@ -35,8 +32,7 @@ public class Agent {
         }else if (parent1.neurons.size()==parent2.neurons.size()){
             for (int i=0;i<parent1.neurons.size();i++){
                 neurons.add(new Neuron((parent1.neurons.get(i).bias+parent2.neurons.get(i).bias)/2,
-                        parent1.getScore()<parent2.getScore()?parent1.neurons.get(i).connections:parent2.neurons.get(i).connections,
-                        parent1.getScore()< parent2.getScore()?parent1.neurons.get(i).weights:parent2.neurons.get(i).weights));
+                        parent1.getScore()<parent2.getScore()?parent1.neurons.get(i).connections:parent2.neurons.get(i).connections));
             }
         }
 
@@ -45,36 +41,34 @@ public class Agent {
     }
 
     private void sortNeurons(){
-        @SuppressWarnings("unchecked") ArrayList<Neuron> copyOfNeurons= (ArrayList<Neuron>) neurons.clone();
+        ArrayList<Neuron[]> copyOfNeurons = new ArrayList<>();
+        for (Neuron neuron:neurons){
+            copyOfNeurons.add(new Neuron[]{neuron,new Neuron(neuron.bias, neuron.connections)});
+        }
         sortedNeurons.clear();
         ArrayList<Integer> removedNeuronIndex=new ArrayList<>();
         while (!Objects.equals(copyOfNeurons, new ArrayList<>())) {
-            System.out.println("try");
-            for (Neuron neuron:copyOfNeurons) {
-                if (!neuron.connections.equals(new ArrayList<Integer>()) || sortedNeurons.contains(copyOfNeurons.indexOf(neuron))) {
+            for (Neuron[] neuron:copyOfNeurons) {
+                if (!neuron[1].connections.equals(new ArrayList<Integer>())) {
                     continue;
                 }
-                sortedNeurons.add(copyOfNeurons.indexOf(neuron));
-                for (Neuron neuron1 : copyOfNeurons) {
-                    if (neuron == neuron1) {
+                sortedNeurons.add(neurons.indexOf(neuron[0]));
+                for (Neuron[] neuron1 : copyOfNeurons) {
+                    if (neuron == neuron1 || neuron1[1].connections.equals(new ArrayList<>())) {
                         continue;
                     }
-                    System.out.println(copyOfNeurons.indexOf(neuron) + "\n" + neuron1.connections+ "\n"+copyOfNeurons.indexOf(neuron1));
-                    neuron1.connections.removeIf(connection -> connection == copyOfNeurons.indexOf(neuron));
-                    System.out.println(neuron1.connections);
+                    neuron1[1].connections.removeIf(connection -> connection == neurons.indexOf(neuron[0]));
                 }
                 removedNeuronIndex.add(copyOfNeurons.indexOf(neuron));
             }
             copyOfNeurons.removeIf(neuron -> removedNeuronIndex.contains(copyOfNeurons.indexOf(neuron)));
             removedNeuronIndex.clear();
         }
-        System.out.println(sortedNeurons);
     }
 
     public void calculateOutput(){
         for (int neuronIndex:sortedNeurons){
             neurons.get(neuronIndex).calculateValue(this);
-            System.out.println(neuronIndex);
         }
     }
 
@@ -111,12 +105,10 @@ public class Agent {
         switch (new Random().nextInt(0,6)){
             case 0:
                 //Adds new neuron
-                ArrayList<Float> weights=new ArrayList<>();
-                weights.add(1f);
                 ArrayList<Integer> connections=new ArrayList<>();
                 connections.add(neurons.get(randNeuronIndex).connections.get(randConnectionIndex));
                 neurons.get(randNeuronIndex).connections.set(randConnectionIndex,neurons.size()+1);
-                neurons.add(new Neuron(0,connections,weights));
+                neurons.add(new Neuron(0,connections));
                 break;
             case 1:
                 //changes bias

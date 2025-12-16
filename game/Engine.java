@@ -57,6 +57,11 @@ public class Engine {
                 }
             }
         }
+        combined=new boolean[][]{
+                {false,false,false,false},
+                {false,false,false,false},
+                {false,false,false,false},
+                {false,false,false,false}};
         random2or4();
     }
 

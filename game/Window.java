@@ -9,8 +9,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
-import java.util.Arrays;
-
 public class Window extends JFrame implements KeyListener,ActionListener {
     public Engine engine=new Engine();
     private static final JLabel label=new JLabel();
@@ -109,7 +107,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==startButton){
-            for (int i = 0; i < 1; i++) {
+            for (int i = 0; i < 10; i++) {
                 agents.add(new Agent());
                 int finalI = i;
                 buttons.add(new JButton());
@@ -118,7 +116,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                     update();
                     currentAgent=finalI;
                 });
-                buttons.get(i).setText("Agent "+finalI);
+                buttons.get(i).setText("Agent "+(finalI+1));
                 if (50+(i*25)<this.getSize().getHeight()){
                     buttons.get(i).setBounds(430,50+i*25,100,25);
                 }else if (50+(i-this.getSize().getHeight())*25<this.getSize().getHeight()){
@@ -131,12 +129,12 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                 this.requestFocus();
                 this.add(buttons.get(i));
             }
+            this.update(this.getGraphics());
         } else if (e.getSource()==resetButton) {
             engine.reset();
         } else if (e.getSource()==updateButton) {
             agents.get(currentAgent).setEngine(engine);
             agents.get(currentAgent).outputMove();
-            System.out.println(Arrays.deepToString(agents.get(currentAgent).getEngine().board));
             update();
         }
     }
