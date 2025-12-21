@@ -9,8 +9,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Random;
+
 public class Window extends JFrame implements KeyListener,ActionListener {
-    public Engine engine=new Engine();
+    public Engine engine;
     private static final JLabel label=new JLabel();
     public final JLabel[][] labels=new JLabel[][]{
             {new JLabel(),new JLabel(),new JLabel(),new JLabel()},
@@ -25,7 +28,8 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     public final JButton updateButton=new JButton();
     private int currentAgent;
     public final JButton ownEngineButton=new JButton();
-    private Engine ownEngine;
+    private final Engine ownEngine=new Engine();
+    private boolean simulationStarted=false;
 
     public Window(){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -67,11 +71,14 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         startButton.addActionListener(this);
         resetButton.addActionListener(this);
         updateButton.addActionListener(this);
+        ownEngineButton.addActionListener(this);
         this.add(label);
         this.setVisible(true);
         this.add(resetButton);
         this.add(startButton);
         this.add(updateButton);
+        this.add(ownEngineButton);
+        this.engine=ownEngine;
         update();
     }
 
@@ -104,38 +111,69 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     @Override
     public void keyReleased(KeyEvent e) {}
 
+    private void newGeneration(){
+        int halfPopulation=agents.size()/2;
+        agents.removeIf(agent -> agents.indexOf(agent)>=(halfPopulation));
+        for (Agent agent:agents){
+            agent.mutate();
+        }
+        System.out.println("Agents mutated successfully");
+        for (int i = 0; i < halfPopulation; i++) {
+            System.out.println("Creating new agent: "+(i+1));
+            agents.add(new Agent(agents.get(new Random().nextInt(0,halfPopulation)),agents.get(new Random().nextInt(0,halfPopulation))));
+            System.out.println("Created new agent: "+(i+1));
+        }
+        update(this.getGraphics());
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==startButton){
-            for (int i = 0; i < 10; i++) {
-                agents.add(new Agent());
-                int finalI = i;
-                buttons.add(new JButton());
-                buttons.get(i).addActionListener((event)->{
-                    engine=agents.get(finalI).getEngine();
-                    update();
-                    currentAgent=finalI;
-                });
-                buttons.get(i).setText("Agent "+(finalI+1));
-                if (50+(i*25)<this.getSize().getHeight()){
-                    buttons.get(i).setBounds(430,50+i*25,100,25);
-                }else if (50+(i-this.getSize().getHeight())*25<this.getSize().getHeight()){
-                    buttons.get(i).setBounds(530, (int) (50+(i-this.getSize().getHeight()/25)*25),100,25);
-                } else if (50+(i-2*(this.getSize().getHeight()-50)/25)*25<this.getSize().getHeight()) {
-                    buttons.get(i).setBounds(630, (int) (50+(i-(this.getSize().getHeight()-50)*2/25)*25),100,25);
-                }else{
-                    buttons.get(i).setBounds(730, (int) (50+(i-(this.getSize().getHeight()-50)*3/25)*25),100,25);
+            if (!simulationStarted){
+                for (int i = 0; i < 10; i++) {
+                    agents.add(new Agent());
+                    int finalI = i;
+                    buttons.add(new JButton());
+                    buttons.get(i).addActionListener((event)->{
+                        engine=agents.get(finalI).getEngine();
+                        update();
+                        currentAgent=finalI;
+                    });
+                    buttons.get(i).setText("Agent "+(finalI+1));
+                    if (50+(i*25)<this.getSize().getHeight()){
+                        buttons.get(i).setBounds(430,50+i*25,100,25);
+                    }else if (50+(i-this.getSize().getHeight())*25<this.getSize().getHeight()){
+                        buttons.get(i).setBounds(530, (int) (50+(i-this.getSize().getHeight()/25)*25),100,25);
+                    } else if (50+(i-2*(this.getSize().getHeight()-50)/25)*25<this.getSize().getHeight()) {
+                        buttons.get(i).setBounds(630, (int) (50+(i-(this.getSize().getHeight()-50)*2/25)*25),100,25);
+                    }else{
+                        buttons.get(i).setBounds(730, (int) (50+(i-(this.getSize().getHeight()-50)*3/25)*25),100,25);
+                    }
+                    this.requestFocus();
+                    this.add(buttons.get(i));
                 }
-                this.requestFocus();
-                this.add(buttons.get(i));
+                this.update(this.getGraphics());
+                simulationStarted=true;
+                startButton.setText("Next Generation");
+            }else {
+                for (Agent agent:agents){
+                    agent.calculateScore();
+                }
+                agents.sort(Comparator.comparingInt(agent -> agent.score*-1));
+                for (Agent agent:agents){
+                    System.out.println(agents.indexOf(agent)+" "+agent.score);
+                }
+                newGeneration();
             }
-            this.update(this.getGraphics());
         } else if (e.getSource()==resetButton) {
             engine.reset();
         } else if (e.getSource()==updateButton) {
             agents.get(currentAgent).setEngine(engine);
             agents.get(currentAgent).outputMove();
             update();
+        } else if (e.getSource()==ownEngineButton){
+            engine=ownEngine;
+            updateButton.addActionListener((event)->update());
         }
     }
 }

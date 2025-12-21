@@ -10,20 +10,24 @@ public class Agent {
     ArrayList<Neuron> neurons= new ArrayList<>(0);
     Engine engine=new Engine();
     ArrayList<Integer> sortedNeurons=new ArrayList<>();
+    public int score;
 
     public Agent(){
         ArrayList<Integer> connections=new ArrayList<>();
-        for (int i = 4; i < 20; i++) {
+        for (int i = 0; i < 16; i++) {
             connections.add(i);
         }
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 16; i++) {
+            neurons.add(new Neuron(0,new ArrayList<>()));
+        }
+        for (int i = 16; i < 20; i++) {
             neurons.add(new Neuron(new Random().nextFloat(-1,1),
                     connections));
         }
-        for (int i = 4; i < 20; i++) {
-            neurons.add(new Neuron(0,new ArrayList<>()));
-        }
         sortNeurons();
+        for (Neuron neuron:neurons){
+            System.out.println(neurons.indexOf(neuron)+" "+neuron.connections);
+        }
     }
 
     public Agent(Agent parent1, Agent parent2){
@@ -32,12 +36,40 @@ public class Agent {
         }else if (parent1.neurons.size()==parent2.neurons.size()){
             for (int i=0;i<parent1.neurons.size();i++){
                 neurons.add(new Neuron((parent1.neurons.get(i).bias+parent2.neurons.get(i).bias)/2,
-                        parent1.getScore()<parent2.getScore()?parent1.neurons.get(i).connections:parent2.neurons.get(i).connections));
+                        parent1.score<parent2.score?parent1.neurons.get(i).connections:parent2.neurons.get(i).connections,
+                        parent1.score<parent2.score?parent1.neurons.get(i).weights:parent2.neurons.get(i).weights));
+            }
+        } else if (parent1.neurons.size()<parent2.neurons.size()) {
+            for (int i=0;i<parent1.neurons.size();i++){
+                neurons.add(new Neuron((parent1.neurons.get(i).bias+parent2.neurons.get(i).bias)/2,
+                        parent1.score<parent2.score?parent1.neurons.get(i).connections:parent2.neurons.get(i).connections,
+                        parent1.score<parent2.score?parent1.neurons.get(i).weights:parent2.neurons.get(i).weights));
+            }
+            for (int i = 0; i < parent2.neurons.size()-parent1.neurons.size(); i++) {
+                if (new Random().nextInt(0,4)==2){continue;}
+                neurons.add(new Neuron((parent2.neurons.get(i).bias)/2,
+                        parent2.neurons.get(i).connections,
+                        parent2.neurons.get(i).weights));
+            }
+        } else {
+            for (int i=0;i<parent2.neurons.size();i++){
+                neurons.add(new Neuron((parent1.neurons.get(i).bias+parent2.neurons.get(i).bias)/2,
+                        parent1.score<parent2.score?parent1.neurons.get(i).connections:parent2.neurons.get(i).connections,
+                        parent1.score<parent2.score?parent1.neurons.get(i).weights:parent2.neurons.get(i).weights));
+            }
+            for (int i = 0; i < parent1.neurons.size()-parent2.neurons.size(); i++) {
+                if (new Random().nextInt(0,4)==2){continue;}
+                neurons.add(new Neuron((parent1.neurons.get(i).bias)/2,
+                        parent1.neurons.get(i).connections,
+                        parent1.neurons.get(i).weights));
             }
         }
-
+        System.out.println("Mutating new agent");
         mutate();
         sortNeurons();
+        for (Neuron neuron:neurons){
+            System.out.println(neurons.indexOf(neuron)+" "+neuron.connections);
+        }
     }
 
     private void sortNeurons(){
@@ -47,9 +79,11 @@ public class Agent {
         }
         sortedNeurons.clear();
         ArrayList<Integer> removedNeuronIndex=new ArrayList<>();
-        while (!Objects.equals(copyOfNeurons, new ArrayList<>())) {
+        int i=0;
+        while (!Objects.equals(copyOfNeurons, new ArrayList<Neuron[]>()) && i<100) {
+            System.out.println("Try "+(i+1)+" to sort neurons.");
             for (Neuron[] neuron:copyOfNeurons) {
-                if (!neuron[1].connections.equals(new ArrayList<Integer>())) {
+                if (!neuron[1].connections.isEmpty()) {
                     continue;
                 }
                 sortedNeurons.add(neurons.indexOf(neuron[0]));
@@ -61,9 +95,14 @@ public class Agent {
                 }
                 removedNeuronIndex.add(copyOfNeurons.indexOf(neuron));
             }
+            for (Neuron[] neuron:copyOfNeurons){
+                System.out.println(neurons.indexOf(neuron[0]));
+            }
             copyOfNeurons.removeIf(neuron -> removedNeuronIndex.contains(copyOfNeurons.indexOf(neuron)));
             removedNeuronIndex.clear();
+            i++;
         }
+        System.out.println(sortedNeurons);
     }
 
     public void calculateOutput(){
@@ -74,41 +113,39 @@ public class Agent {
 
     public void outputMove(){
         calculateOutput();
-        float biggest=neurons.get(0).value;
-        int currentNeuron = 0;
-        for (int i = 0; i < 4; i++) {
+        float biggest=neurons.get(16).value;
+        int currentNeuron = 16;
+        for (int i = 16; i < 20; i++) {
             if (neurons.get(i).value > biggest){
                 currentNeuron=i;
                 biggest=neurons.get(i).value;
             }
-            System.out.print("Current neuron: "+neurons.get(i));
+            /*System.out.print("Current neuron: "+neurons.get(i));
             System.out.print(", value: "+neurons.get(i).value);
-            System.out.println(", biggest value: "+biggest+", current neuron: "+currentNeuron);
+            System.out.println(", biggest value: "+biggest+", current neuron: "+currentNeuron);*/
         }
         switch (currentNeuron){
-            case 0:engine.moveLeft();System.out.println("Left");break;
-            case 1:engine.moveUp();System.out.println("Up");break;
-            case 2:engine.moveRight();System.out.println("Right");break;
-            case 3:engine.moveDown();System.out.println("Down");break;
+            case 16:engine.moveLeft();/*System.out.println("Left");*/break;
+            case 17:engine.moveUp();/*System.out.println("Up");*/break;
+            case 18:engine.moveRight();/*System.out.println("Right");*/break;
+            case 19:engine.moveDown();/*System.out.println("Down");*/break;
         }
     }
 
-    public int getScore(){
-        return engine.getPoints();
-    }
-
-    private void mutate(){
-        if (new Random().nextInt(0,100)>5){return;}
-        int randNeuronIndex=new Random().nextInt(0,neurons.size());
+    public void mutate(){
+        if (new Random().nextInt(0,10)>5){return;}
+        int randNeuronIndex=new Random().nextInt(16,neurons.size());
         int randConnectionIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).connections.size());
         int randWeightIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).weights.size());
         switch (new Random().nextInt(0,6)){
             case 0:
                 //Adds new neuron
                 ArrayList<Integer> connections=new ArrayList<>();
+                ArrayList<Float> weight=new ArrayList<>();
+                weight.add(1f);
                 connections.add(neurons.get(randNeuronIndex).connections.get(randConnectionIndex));
-                neurons.get(randNeuronIndex).connections.set(randConnectionIndex,neurons.size()+1);
-                neurons.add(new Neuron(0,connections));
+                neurons.add(new Neuron(0,connections,weight));
+                neurons.get(randNeuronIndex).connections.set(randConnectionIndex,neurons.size()-1);
                 break;
             case 1:
                 //changes bias
@@ -120,12 +157,13 @@ public class Agent {
                 break;
             case 3:
                 //Add connection
-                int randNeuronIndex2=new Random().nextInt(4,neurons.size());
-                if (randNeuronIndex2==randNeuronIndex){return;}
+                int randNeuronIndex2=new Random().nextInt(0,neurons.size());
+                if (randNeuronIndex2==randNeuronIndex || (randNeuronIndex2<=19 && randNeuronIndex2>=16) || neurons.get(randNeuronIndex).connections.contains(randNeuronIndex2)){return;}
                 for (int connection:neurons.get(randNeuronIndex2).connections) {
                     if (randNeuronIndex == connection){return;}
                 }
                 neurons.get(randNeuronIndex).connections.add(randNeuronIndex2);
+                neurons.get(randNeuronIndex).weights.add(new Random().nextFloat(-1,1));
                 break;
             case 4:
                 //Remove neuron
@@ -133,9 +171,13 @@ public class Agent {
                 for (Neuron neuron:neurons){
                     if (neuron==neurons.get(randNeuronIndex)){continue;}
                     for (int connection: neuron.connections){
-                        if (connection!=randNeuronIndex){continue;}
-                        neuron.connections.remove((Integer) connection);
-                        neuron.weights.remove(neuron.connections.indexOf(connection));
+                        if (connection<randNeuronIndex){continue;}
+                        if (connection==randNeuronIndex){
+                            neuron.weights.remove(neuron.connections.indexOf(connection));
+                            neuron.connections.remove((Integer) connection);
+                        }else {
+                            neuron.connections.set(neuron.connections.indexOf(connection),connection-1);
+                        }
                     }
                 }
                 neurons.remove(randNeuronIndex);
@@ -159,5 +201,15 @@ public class Agent {
 
     public void setEngine(Engine engine){
         this.engine=engine;
+    }
+
+    public void calculateScore(){
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 50 & !engine.lose(); j++) {
+                outputMove();
+            }
+            score+= engine.getPoints();
+            engine.reset();
+        }
     }
 }

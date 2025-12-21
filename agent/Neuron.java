@@ -17,20 +17,27 @@ public class Neuron {
         }
     }
 
+    public Neuron(float bias, ArrayList<Integer> connections, ArrayList<Float> weights){
+        this.bias=bias;
+        this.connections.addAll(connections);
+        this.weights.addAll(weights);
+    }
+
     public float getValue(){
         return value;
     }
 
     public void calculateValue(Agent brain){
         value=0;
-        if (4<brain.neurons.indexOf(this) && brain.neurons.indexOf(this)<20){
-            for (int i = 4; i < 20; i++) {
+        if (brain.neurons.indexOf(this)<16){
+            for (int i = 0; i < 16; i++) {
                 if (brain.neurons.get(i)!=this){continue;}
-                value = brain.getEngine().getBoard()[(int) (((double) ((i - 4) / 4))%4)][i%4]==0? 1 : ((float) 1 / brain.getEngine().getBoard()[(int) (((double) ((i - 4) / 4))%4)][i%4] );
+                value = brain.getEngine().getBoard()[(int) (((double) ((i ) / 4))%4)][i%4]==0? 1 : ((float) 1 / brain.getEngine().getBoard()[(int) (((double) ((i ) / 4))%4)][i%4] );
             }
         }else {
             for (int connection:connections){
-                value+=brain.neurons.get(connection).getValue()* weights.get(connection-4);
+                value+=brain.neurons.get(connection).getValue()*
+                        weights.get(connections.indexOf(connection));
             }
         }
         value=value+bias;

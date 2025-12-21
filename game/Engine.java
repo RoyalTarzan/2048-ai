@@ -23,9 +23,9 @@ public class Engine {
         return board;
     }
 
-    public void setBoard(int[][] board){
+    /*public void setBoard(int[][] board){
         this.board=board;
-    }
+    }*/
 
     public int getPoints() {
         return points;
@@ -182,8 +182,13 @@ public class Engine {
                         return true;
                     }
                 }
+                try{
+                    if (board[i][j]!=board[i][j-1]||board[i][j-1]!=0){
+                        return true;
+                    }
+                }catch (ArrayIndexOutOfBoundsException ignored){}
                 try {
-                    if (board[i][j]!=board[i+1][j]||board[i+1][j]!=0){
+                    if (board[i][j] != board[i + 1][j]){
                         return true;
                     }
                 }catch (ArrayIndexOutOfBoundsException e){
@@ -191,6 +196,11 @@ public class Engine {
                         return true;
                     }
                 }
+                try {
+                    if (board[i][j]!=board[i-1][j]||board[i-1][j]!=0){
+                        return true;
+                    }
+                }catch (ArrayIndexOutOfBoundsException ignored){}
             }
         }
         return false;
@@ -228,10 +238,11 @@ public class Engine {
     public void reset(){
         board=new int[][]{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
         points=0;
+        random2or4();
     }
 
     private int lowest(){
-        int lowest=Integer.MAX_VALUE;
+        int lowest=board[0][0];
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 if (board[i][j]<lowest){
