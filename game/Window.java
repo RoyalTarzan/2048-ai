@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 
@@ -117,11 +118,11 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         for (Agent agent:agents){
             agent.mutate();
         }
-        System.out.println("Agents mutated successfully");
+        //System.out.println("Agents mutated successfully");
         for (int i = 0; i < halfPopulation; i++) {
-            System.out.println("Creating new agent: "+(i+1));
+            //System.out.println("Creating new agent: "+(i+1));
             agents.add(new Agent(agents.get(new Random().nextInt(0,halfPopulation)),agents.get(new Random().nextInt(0,halfPopulation))));
-            System.out.println("Created new agent: "+(i+1));
+            //System.out.println("Created new agent: "+(i+1));
         }
         update(this.getGraphics());
     }
@@ -130,7 +131,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==startButton){
             if (!simulationStarted){
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < 100; i++) {
                     agents.add(new Agent());
                     int finalI = i;
                     buttons.add(new JButton());
@@ -140,36 +141,43 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                         currentAgent=finalI;
                     });
                     buttons.get(i).setText("Agent "+(finalI+1));
-                    if (50+(i*25)<this.getSize().getHeight()){
+                    if (50+(i*25)<getSize().getHeight()){
                         buttons.get(i).setBounds(430,50+i*25,100,25);
-                    }else if (50+(i-this.getSize().getHeight())*25<this.getSize().getHeight()){
-                        buttons.get(i).setBounds(530, (int) (50+(i-this.getSize().getHeight()/25)*25),100,25);
-                    } else if (50+(i-2*(this.getSize().getHeight()-50)/25)*25<this.getSize().getHeight()) {
-                        buttons.get(i).setBounds(630, (int) (50+(i-(this.getSize().getHeight()-50)*2/25)*25),100,25);
+                    }else if (50+(i-getSize().getHeight())*25<getSize().getHeight()){
+                        buttons.get(i).setBounds(530, (int) (50+(i-getSize().getHeight()/25)*25),100,25);
+                    } else if (50+(i-2*(getSize().getHeight()-50)/25)*25<getSize().getHeight()) {
+                        buttons.get(i).setBounds(630, (int) (50+(i-(getSize().getHeight()-50)*2/25)*25),100,25);
                     }else{
-                        buttons.get(i).setBounds(730, (int) (50+(i-(this.getSize().getHeight()-50)*3/25)*25),100,25);
+                        buttons.get(i).setBounds(730, (int) (50+(i-(getSize().getHeight()-50)*3/25)*25),100,25);
                     }
-                    this.requestFocus();
-                    this.add(buttons.get(i));
+                    requestFocus();
+                    add(buttons.get(i));
                 }
-                this.update(this.getGraphics());
+                update(this.getGraphics());
                 simulationStarted=true;
-                startButton.setText("Next Generation");
+                startButton.setText("Next Gen");
             }else {
                 for (Agent agent:agents){
                     agent.calculateScore();
                 }
                 agents.sort(Comparator.comparingInt(agent -> agent.score*-1));
                 for (Agent agent:agents){
-                    System.out.println(agents.indexOf(agent)+" "+agent.score);
+                    if (agents.indexOf(agent)>9&&agents.indexOf(agent)<(agents.size()-10)){continue;}
+                    System.out.println((agents.indexOf(agent)+1)+" "+agent.score);
                 }
+                engine=agents.getFirst().getEngine();
+                update();
+                update(this.getGraphics());
                 newGeneration();
             }
         } else if (e.getSource()==resetButton) {
             engine.reset();
         } else if (e.getSource()==updateButton) {
+            System.out.println(Arrays.deepToString(agents.get(currentAgent).getEngine().board));
             agents.get(currentAgent).setEngine(engine);
             agents.get(currentAgent).outputMove();
+            System.out.println(Arrays.deepToString(agents.get(currentAgent).getEngine().board));
+            System.out.println(agents.get(currentAgent).lastMove);
             update();
         } else if (e.getSource()==ownEngineButton){
             engine=ownEngine;

@@ -3,6 +3,7 @@ package agent;
 import game.Engine;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Random;
 
@@ -11,6 +12,7 @@ public class Agent {
     Engine engine=new Engine();
     ArrayList<Integer> sortedNeurons=new ArrayList<>();
     public int score;
+    public String lastMove;
 
     public Agent(){
         ArrayList<Integer> connections=new ArrayList<>();
@@ -25,9 +27,9 @@ public class Agent {
                     connections));
         }
         sortNeurons();
-        for (Neuron neuron:neurons){
-            System.out.println(neurons.indexOf(neuron)+" "+neuron.connections);
-        }
+        //for (Neuron neuron:neurons){
+        //    System.out.println(neurons.indexOf(neuron)+" "+neuron.connections);
+        //}
     }
 
     public Agent(Agent parent1, Agent parent2){
@@ -64,12 +66,12 @@ public class Agent {
                         parent1.neurons.get(i).weights));
             }
         }
-        System.out.println("Mutating new agent");
+        //System.out.println("Mutating new agent");
         mutate();
         sortNeurons();
-        for (Neuron neuron:neurons){
-            System.out.println(neurons.indexOf(neuron)+" "+neuron.connections);
-        }
+        //for (Neuron neuron:neurons){
+        //    System.out.println(neurons.indexOf(neuron)+" "+neuron.connections);
+        //}
     }
 
     private void sortNeurons(){
@@ -81,7 +83,7 @@ public class Agent {
         ArrayList<Integer> removedNeuronIndex=new ArrayList<>();
         int i=0;
         while (!Objects.equals(copyOfNeurons, new ArrayList<Neuron[]>()) && i<100) {
-            System.out.println("Try "+(i+1)+" to sort neurons.");
+            //System.out.println("Try "+(i+1)+" to sort neurons.");
             for (Neuron[] neuron:copyOfNeurons) {
                 if (!neuron[1].connections.isEmpty()) {
                     continue;
@@ -95,14 +97,14 @@ public class Agent {
                 }
                 removedNeuronIndex.add(copyOfNeurons.indexOf(neuron));
             }
-            for (Neuron[] neuron:copyOfNeurons){
-                System.out.println(neurons.indexOf(neuron[0]));
-            }
+            //for (Neuron[] neuron:copyOfNeurons){
+            //    System.out.println(neurons.indexOf(neuron[0]));
+            //}
             copyOfNeurons.removeIf(neuron -> removedNeuronIndex.contains(copyOfNeurons.indexOf(neuron)));
             removedNeuronIndex.clear();
             i++;
         }
-        System.out.println(sortedNeurons);
+        //System.out.println(sortedNeurons);
     }
 
     public void calculateOutput(){
@@ -113,27 +115,25 @@ public class Agent {
 
     public void outputMove(){
         calculateOutput();
-        float biggest=neurons.get(16).value;
-        int currentNeuron = 16;
-        for (int i = 16; i < 20; i++) {
-            if (neurons.get(i).value > biggest){
-                currentNeuron=i;
-                biggest=neurons.get(i).value;
-            }
             /*System.out.print("Current neuron: "+neurons.get(i));
             System.out.print(", value: "+neurons.get(i).value);
             System.out.println(", biggest value: "+biggest+", current neuron: "+currentNeuron);*/
+        ArrayList<Neuron> outputNeurons=new ArrayList<>();
+        for (int i = 16; i < 20; i++) {
+            outputNeurons.add(neurons.get(i));
         }
-        switch (currentNeuron){
-            case 16:engine.moveLeft();/*System.out.println("Left");*/break;
-            case 17:engine.moveUp();/*System.out.println("Up");*/break;
-            case 18:engine.moveRight();/*System.out.println("Right");*/break;
-            case 19:engine.moveDown();/*System.out.println("Down");*/break;
+        outputNeurons.sort(Comparator.comparingDouble(neuron->neuron.value));
+        switch (neurons.indexOf(outputNeurons.get(0))){
+            case 16:engine.moveLeft();lastMove="Left";break;
+            case 17:engine.moveUp();lastMove="Up";break;
+            case 18:engine.moveRight();lastMove="Right";break;
+            case 19:engine.moveDown();lastMove="Down";
         }
+
     }
 
     public void mutate(){
-        if (new Random().nextInt(0,10)>5){return;}
+        if (new Random().nextInt(0,10)>-1){return;}
         int randNeuronIndex=new Random().nextInt(16,neurons.size());
         int randConnectionIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).connections.size());
         int randWeightIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).weights.size());

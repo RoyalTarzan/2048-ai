@@ -32,6 +32,7 @@ public class Engine {
     }
 
     public void moveRight(){
+        int[][] oldBoard=board.clone();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 try{
@@ -57,15 +58,18 @@ public class Engine {
                 }
             }
         }
+        if (board!=oldBoard){
+            random2or4();
+        }
         combined=new boolean[][]{
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false}};
-        random2or4();
     }
 
     public void moveLeft() {
+        int[][] oldBoard=board.clone();
         for (int i = 0; i < 4; i++) {
             for (int j =3; j > -1; j--) {
                 try{
@@ -91,15 +95,18 @@ public class Engine {
                 }
             }
         }
+        if (board!=oldBoard){
+            random2or4();
+        }
         combined=new boolean[][]{
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false}};
-        random2or4();
     }
 
     public void moveDown() {
+        int[][] oldBoard=board.clone();
         for (int i = 0; i < 4; i++) {
             for (int j =0; j < 4; j++) {
                 try{
@@ -125,15 +132,18 @@ public class Engine {
                 }
             }
         }
+        if (board!=oldBoard){
+            random2or4();
+        }
         combined=new boolean[][]{
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false}};
-        random2or4();
     }
 
     public void moveUp() {
+        int[][] oldBoard=board.clone();
         for (int i = 3; i > -1; i--) {
             for (int j =0; j < 4; j++) {
                 try{
@@ -159,12 +169,14 @@ public class Engine {
                 }
             }
         }
+        if (board!=oldBoard){
+            random2or4();
+        }
         combined=new boolean[][]{
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false}};
-        random2or4();
     }
 
     public boolean lose(){
