@@ -1,5 +1,6 @@
 package game;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class Engine {
@@ -33,6 +34,7 @@ public class Engine {
 
     public void moveRight(){
         int[][] oldBoard=board.clone();
+        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 try{
@@ -58,8 +60,17 @@ public class Engine {
                 }
             }
         }
-        if (board!=oldBoard){
-            random2or4();
+        System.out.println("New board: "+ Arrays.deepToString(board));
+        boolean added2Or4=false;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j]==oldBoard[i][j]){continue;}
+                random2or4();
+                System.out.println("Added random 2 or 4");
+                added2Or4=true;
+                break;
+            }
+            if (added2Or4){break;}
         }
         combined=new boolean[][]{
                 {false,false,false,false},
@@ -70,6 +81,7 @@ public class Engine {
 
     public void moveLeft() {
         int[][] oldBoard=board.clone();
+        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
         for (int i = 0; i < 4; i++) {
             for (int j =3; j > -1; j--) {
                 try{
@@ -95,8 +107,17 @@ public class Engine {
                 }
             }
         }
-        if (board!=oldBoard){
-            random2or4();
+        System.out.println("New board: "+ Arrays.deepToString(board));
+        boolean added2Or4=false;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j]==oldBoard[i][j]){continue;}
+                random2or4();
+                System.out.println("Added random 2 or 4");
+                added2Or4=true;
+                break;
+            }
+            if (added2Or4){break;}
         }
         combined=new boolean[][]{
                 {false,false,false,false},
@@ -107,6 +128,7 @@ public class Engine {
 
     public void moveDown() {
         int[][] oldBoard=board.clone();
+        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
         for (int i = 0; i < 4; i++) {
             for (int j =0; j < 4; j++) {
                 try{
@@ -132,8 +154,17 @@ public class Engine {
                 }
             }
         }
-        if (board!=oldBoard){
-            random2or4();
+        System.out.println("New board: "+ Arrays.deepToString(board));
+        boolean added2Or4=false;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j]==oldBoard[i][j]){continue;}
+                random2or4();
+                System.out.println("Added random 2 or 4");
+                added2Or4=true;
+                break;
+            }
+            if (added2Or4){break;}
         }
         combined=new boolean[][]{
                 {false,false,false,false},
@@ -144,6 +175,7 @@ public class Engine {
 
     public void moveUp() {
         int[][] oldBoard=board.clone();
+        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
         for (int i = 3; i > -1; i--) {
             for (int j =0; j < 4; j++) {
                 try{
@@ -169,14 +201,70 @@ public class Engine {
                 }
             }
         }
-        if (board!=oldBoard){
-            random2or4();
+        System.out.println("New board: "+ Arrays.deepToString(board));
+        boolean added2Or4=false;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j]==oldBoard[i][j]){continue;}
+                random2or4();
+                System.out.println("Added random 2 or 4");
+                added2Or4=true;
+                break;
+            }
+            if (added2Or4){break;}
         }
         combined=new boolean[][]{
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false},
                 {false,false,false,false}};
+    }
+
+    public boolean move(int iDis, int iStart,int iEnd,int jDis,int jStart, int jEnd){
+        int[][] oldBoard=board.clone();
+        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
+        for (int i = iStart; i < iEnd; i++) {
+            for (int j =jStart; j < jEnd; j++) {
+                try{
+                    if(board[i+iDis][j+jDis]==0){
+                        board[i+iDis][j+jDis]=board[i][j];
+                        board[i][j]=0;
+                        if ( i>0&&board[i-iDis][j-jDis]!=0){
+                            board[i][j]=board[i-iDis][j-jDis];
+                            board[i-iDis][j-jDis]=0;
+                        }
+                    }else if (board[i+iDis][j+jDis]==board[i][j]&&!combined[i][j]){
+                        board[i+iDis][j+jDis]=board[i][j]*2;
+                        board[i][j]=0;
+                        if ( i>0&&board[i-iDis][j-jDis]!=0){
+                            board[i][j]=board[i-iDis][j-jDis];
+                            board[i-iDis][j-jDis]=0;
+                        }
+                        combined[i+iDis][j+jDis]=true;
+                        points+=board[i+iDis][j+jDis];
+                    }
+                }   catch (ArrayIndexOutOfBoundsException _){
+                }
+            }
+        }
+        System.out.println("New board: "+ Arrays.deepToString(board));
+        boolean added2Or4=false;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j]==oldBoard[i][j]){continue;}
+                random2or4();
+                System.out.println("Added random 2 or 4");
+                added2Or4=true;
+                break;
+            }
+            if (added2Or4){break;}
+        }
+        combined=new boolean[][]{
+                {false,false,false,false},
+                {false,false,false,false},
+                {false,false,false,false},
+                {false,false,false,false}};
+        return added2Or4;
     }
 
     public boolean lose(){
