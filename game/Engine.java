@@ -32,216 +32,70 @@ public class Engine {
         return points;
     }
 
-    public void moveRight(){
-        int[][] oldBoard=board.clone();
-        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                try{
-                    if(board[i][j+1]==0){
-                        board[i][j+1]=board[i][j];
-                        board[i][j]=0;
-                        if ( j>0&&board[i][j-1]!=0){
-                            board[i][j]=board[i][j-1];
-                            board[i][j-1]=0;
-                        }
-                    }else if (board[i][j+1]==board[i][j]&&!combined[i][j]){
-                        board[i][j+1]=board[i][j]*2;
-                        board[i][j]=0;
-                        if ( j>0&&board[i][j-1]!=0){
-                            board[i][j]=board[i][j-1];
-                            board[i][j-1]=0;
-                        }
-                        combined[i][j+1]=true;
-                        points+=board[i][j+1];
-                    }
-                }   catch (ArrayIndexOutOfBoundsException e){
-                    board[i][j]=board[i][j];
-                }
-            }
-        }
-        System.out.println("New board: "+ Arrays.deepToString(board));
-        boolean added2Or4=false;
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                if (board[i][j]==oldBoard[i][j]){continue;}
-                random2or4();
-                System.out.println("Added random 2 or 4");
-                added2Or4=true;
-                break;
-            }
-            if (added2Or4){break;}
-        }
-        combined=new boolean[][]{
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false}};
-    }
+    public void moveRight(){}
 
-    public void moveLeft() {
-        int[][] oldBoard=board.clone();
-        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
-        for (int i = 0; i < 4; i++) {
-            for (int j =3; j > -1; j--) {
-                try{
-                    if(board[i][j-1]==0){
-                        board[i][j-1]=board[i][j];
-                        board[i][j]=0;
-                        if ( j<3&&board[i][j+1]!=0){
-                            board[i][j]=board[i][j+1];
-                            board[i][j+1]=0;
-                        }
-                    }else if (board[i][j-1]==board[i][j]&&!combined[i][j]){
-                        board[i][j-1]=board[i][j]*2;
-                        board[i][j]=0;
-                        if ( j<3&&board[i][j+1]!=0){
-                            board[i][j]=board[i][j+1];
-                            board[i][j+1]=0;
-                        }
-                        combined[i][j-1]=true;
-                        points+=board[i][j-1];
-                    }
-                }   catch (ArrayIndexOutOfBoundsException e){
-                    board[i][j]=board[i][j];
-                }
-            }
-        }
-        System.out.println("New board: "+ Arrays.deepToString(board));
-        boolean added2Or4=false;
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                if (board[i][j]==oldBoard[i][j]){continue;}
-                random2or4();
-                System.out.println("Added random 2 or 4");
-                added2Or4=true;
-                break;
-            }
-            if (added2Or4){break;}
-        }
-        combined=new boolean[][]{
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false}};
-    }
+    public void moveLeft() {}
 
-    public void moveDown() {
+    public void moveDown() {}
+
+    public void moveUp() {}
+
+    public boolean move(int up,int left){
+        int iDis;
+        int iStart;
+        int iDir;
+        int jDis;
+        int jStart;
+        int jDir;
+        if (1==up){
+            iStart=3;
+            iDis=-1;
+            iDir=-1;
+        }else if(up==-1){
+            iStart=0;
+            iDis=1;
+            iDir=1;
+        }else {
+            iStart=0;
+            iDis=0;
+            iDir=1;
+        }
+        if (left==1){
+            jStart=3;
+            jDis=-1;
+            jDir=-1;
+        }else if(left==-1){
+            jStart=0;
+            jDis=1;
+            jDir=1;
+        }else {
+            jStart=0;
+            jDis=0;
+            jDir=1;
+        }
         int[][] oldBoard=board.clone();
         System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i <4; i++) {
+            int iLoc=iStart+(i*iDir);
             for (int j =0; j < 4; j++) {
+                int jLoc=jStart+(j*jDir);
                 try{
-                    if(board[i+1][j]==0){
-                        board[i+1][j]=board[i][j];
-                        board[i][j]=0;
-                        if ( i>0&&board[i-1][j]!=0){
-                            board[i][j]=board[i-1][j];
-                            board[i-1][j]=0;
+                    if(board[iLoc+iDis][jLoc+jDis]==0){
+                        board[iLoc+iDis][jLoc+jDis]=board[iLoc][jLoc];
+                        board[iLoc][jLoc]=0;
+                        if ( iLoc>0&&board[iLoc-iDis][jLoc-jDis]!=0){
+                            board[iLoc][jLoc]=board[iLoc-iDis][jLoc-jDis];
+                            board[iLoc-iDis][jLoc-jDis]=0;
                         }
-                    }else if (board[i+1][j]==board[i][j]&&!combined[i][j]){
-                        board[i+1][j]=board[i][j]*2;
-                        board[i][j]=0;
-                        if ( i>0&&board[i-1][j]!=0){
-                            board[i][j]=board[i-1][j];
-                            board[i-1][j]=0;
+                    }else if (board[iLoc+iDis][jLoc+jDis]==board[iLoc][jLoc]&&!combined[iLoc][jLoc]){
+                        board[iLoc+iDis][jLoc+jDis]=board[iLoc][jLoc]*2;
+                        board[iLoc][jLoc]=0;
+                        if ( iLoc>0&&board[iLoc-iDis][jLoc-jDis]!=0){
+                            board[iLoc][jLoc]=board[iLoc-iDis][jLoc-jDis];
+                            board[iLoc-iDis][jLoc-jDis]=0;
                         }
-                        combined[i+1][j]=true;
-                        points+=board[i+1][j];
-                    }
-                }   catch (ArrayIndexOutOfBoundsException e){
-                    board[i][j]=board[i][j];
-                }
-            }
-        }
-        System.out.println("New board: "+ Arrays.deepToString(board));
-        boolean added2Or4=false;
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                if (board[i][j]==oldBoard[i][j]){continue;}
-                random2or4();
-                System.out.println("Added random 2 or 4");
-                added2Or4=true;
-                break;
-            }
-            if (added2Or4){break;}
-        }
-        combined=new boolean[][]{
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false}};
-    }
-
-    public void moveUp() {
-        int[][] oldBoard=board.clone();
-        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
-        for (int i = 3; i > -1; i--) {
-            for (int j =0; j < 4; j++) {
-                try{
-                    if(board[i-1][j]==0){
-                        board[i-1][j]=board[i][j];
-                        board[i][j]=0;
-                        if ( i<3&&board[i+1][j]!=0){
-                            board[i][j]=board[i+1][j];
-                            board[i+1][j]=0;
-                        }
-                    }else if (board[i-1][j]==board[i][j]&&!combined[i][j]){
-                        board[i-1][j]=board[i][j]*2;
-                        board[i][j]=0;
-                        if ( i<3&&board[i+1][j]!=0){
-                            board[i][j]=board[i+1][j];
-                            board[i+1][j]=0;
-                        }
-                        combined[i-1][j]=true;
-                        points+=board[i-1][j];
-                    }
-                }   catch (ArrayIndexOutOfBoundsException e){
-                    board[i][j]=board[i][j];
-                }
-            }
-        }
-        System.out.println("New board: "+ Arrays.deepToString(board));
-        boolean added2Or4=false;
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                if (board[i][j]==oldBoard[i][j]){continue;}
-                random2or4();
-                System.out.println("Added random 2 or 4");
-                added2Or4=true;
-                break;
-            }
-            if (added2Or4){break;}
-        }
-        combined=new boolean[][]{
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false}};
-    }
-
-    public boolean move(int iDis, int iStart,int iEnd,int jDis,int jStart, int jEnd){
-        int[][] oldBoard=board.clone();
-        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
-        for (int i = iStart; i < iEnd; i++) {
-            for (int j =jStart; j < jEnd; j++) {
-                try{
-                    if(board[i+iDis][j+jDis]==0){
-                        board[i+iDis][j+jDis]=board[i][j];
-                        board[i][j]=0;
-                        if ( i>0&&board[i-iDis][j-jDis]!=0){
-                            board[i][j]=board[i-iDis][j-jDis];
-                            board[i-iDis][j-jDis]=0;
-                        }
-                    }else if (board[i+iDis][j+jDis]==board[i][j]&&!combined[i][j]){
-                        board[i+iDis][j+jDis]=board[i][j]*2;
-                        board[i][j]=0;
-                        if ( i>0&&board[i-iDis][j-jDis]!=0){
-                            board[i][j]=board[i-iDis][j-jDis];
-                            board[i-iDis][j-jDis]=0;
-                        }
-                        combined[i+iDis][j+jDis]=true;
-                        points+=board[i+iDis][j+jDis];
+                        combined[iLoc+iDis][jLoc+jDis]=true;
+                        points+=board[iLoc+iDis][jLoc+jDis];
                     }
                 }   catch (ArrayIndexOutOfBoundsException _){
                 }

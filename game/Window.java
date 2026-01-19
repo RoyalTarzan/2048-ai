@@ -9,7 +9,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 
@@ -162,7 +161,8 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                 }
                 agents.sort(Comparator.comparingInt(agent -> agent.score*-1));
                 for (Agent agent:agents){
-                    if (agents.indexOf(agent)>9&&agents.indexOf(agent)<(agents.size()-10)){continue;}
+                    if (agents.indexOf(agent)>4 && agents.indexOf(agent)<((agents.size()/2)-3)){continue;}
+                    if (agents.indexOf(agent)<(agents.size()-5) && agents.indexOf(agent)>((agents.size()/2)+1)){continue;}
                     System.out.println((agents.indexOf(agent)+1)+" "+agent.score);
                 }
                 engine=agents.getFirst().getEngine();
@@ -173,10 +173,8 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         } else if (e.getSource()==resetButton) {
             engine.reset();
         } else if (e.getSource()==updateButton) {
-            System.out.println(Arrays.deepToString(agents.get(currentAgent).getEngine().board));
             agents.get(currentAgent).setEngine(engine);
             agents.get(currentAgent).outputMove();
-            System.out.println(Arrays.deepToString(agents.get(currentAgent).getEngine().board));
             System.out.println(agents.get(currentAgent).lastMove);
             update();
         } else if (e.getSource()==ownEngineButton){

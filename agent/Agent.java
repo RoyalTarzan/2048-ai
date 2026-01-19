@@ -113,7 +113,7 @@ public class Agent {
         }
     }
 
-    public void outputMove(){
+    public boolean outputMove(){
         calculateOutput();
             /*System.out.print("Current neuron: "+neurons.get(i));
             System.out.print(", value: "+neurons.get(i).value);
@@ -123,18 +123,19 @@ public class Agent {
             outputNeurons.add(neurons.get(i));
         }
         outputNeurons.sort(Comparator.comparingDouble(neuron->neuron.value));
-        switch (neurons.indexOf(outputNeurons.get(0))){
-            case 16:engine.moveLeft();lastMove="Left";break;
-            case 17:engine.moveUp();lastMove="Up";break;
-            case 18:engine.moveRight();lastMove="Right";break;
-            case 19:engine.moveDown();lastMove="Down";
-        }
-
+        return switch (neurons.indexOf(outputNeurons.get(0))) {
+            case 16 -> {lastMove = "Left";yield engine.move(0, 1);}
+            case 17 -> {lastMove = "Up";yield engine.move(1, 0);}
+            case 18 -> {lastMove = "Right";yield engine.move(0, -1);}
+            case 19 -> {lastMove = "Down";yield engine.move(-1, 0);}
+            default -> false;
+        };
     }
 
     public void mutate(){
-        if (new Random().nextInt(0,10)>-1){return;}
+        if (new Random().nextInt(0,10)>1){return;}
         int randNeuronIndex=new Random().nextInt(16,neurons.size());
+        System.out.println(randNeuronIndex+":"+neurons.get(randNeuronIndex).connections);
         int randConnectionIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).connections.size());
         int randWeightIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).weights.size());
         switch (new Random().nextInt(0,6)){
@@ -206,7 +207,7 @@ public class Agent {
     public void calculateScore(){
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 50 & !engine.lose(); j++) {
-                outputMove();
+                if(!outputMove()){break;}
             }
             score+= engine.getPoints();
             engine.reset();
