@@ -36,10 +36,31 @@ public class Neuron {
             }
         }else {
             for (int connection:connections){
+                try{
                 value+=brain.neurons.get(connection).getValue()*
-                        weights.get(connections.indexOf(connection));
+                        weights.get(connections.indexOf(connection));}
+                catch (IndexOutOfBoundsException e){
+                    for (Neuron neuron: brain.neurons){
+                        System.out.println(brain.neurons.indexOf(neuron)+" "+neuron.connections);
+                    }
+                }
             }
         }
         value=value+bias;
+    }
+
+    public String toString(){
+        StringBuilder finalString=new StringBuilder();
+        finalString.append("{\n\t\"neuron\":{\n\t\t\"bias\":").append(bias).append(",\n\t\"connections+weights\":[");
+        for (int connection:connections){
+            finalString.append("\t{\n\t\t\"connection\":").append(connection)
+                    .append(",\n\t\t\"weight\":").append(weights.get(connections.indexOf(connection))).append("\n\t}");
+            if (connections.indexOf(connection)<connections.size()-1){
+                finalString.append(",\n");
+            }
+        }
+
+        finalString.append("]\n\t}\n}");
+        return finalString.toString();
     }
 }

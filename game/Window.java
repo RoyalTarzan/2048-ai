@@ -8,6 +8,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Random;
@@ -30,6 +34,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     public final JButton ownEngineButton=new JButton();
     private final Engine ownEngine=new Engine();
     private boolean simulationStarted=false;
+    private int generations;
 
     public Window(){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -126,6 +131,33 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         update(this.getGraphics());
     }
 
+    private void doGeneration() throws IOException {
+        File generationFile=new File("C:\\Users\\dries.meesters\\IdeaProjects\\2048-ai\\src\\generated\\generation_"+generations+".json");
+        generationFile.createNewFile();
+        try {
+            FileWriter fileWriter=new FileWriter("C:\\Users\\dries.meesters\\IdeaProjects\\2048-ai\\src\\generated\\generation_"+generations+".json");
+            for (Agent agent:agents){
+                fileWriter.append(agent.toString());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        for (Agent agent:agents){
+            agent.calculateScore();
+        }
+        agents.sort(Comparator.comparingInt(agent -> agent.score*-1));
+        for (Agent agent:agents){
+            if (agents.indexOf(agent)>4 && agents.indexOf(agent)<((agents.size()/2)-3)){continue;}
+            if (agents.indexOf(agent)<(agents.size()-5) && agents.indexOf(agent)>((agents.size()/2)+1)){continue;}
+            System.out.println((agents.indexOf(agent)+1)+" "+agent.score);
+        }
+        engine=agents.getFirst().getEngine();
+        update();
+        update(this.getGraphics());
+        newGeneration();
+        generations++;
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==startButton){
@@ -156,19 +188,13 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                 simulationStarted=true;
                 startButton.setText("Next Gen");
             }else {
-                for (Agent agent:agents){
-                    agent.calculateScore();
+                for (int i = 0; i < 1; i++) {
+                    try {
+                        doGeneration();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
-                agents.sort(Comparator.comparingInt(agent -> agent.score*-1));
-                for (Agent agent:agents){
-                    if (agents.indexOf(agent)>4 && agents.indexOf(agent)<((agents.size()/2)-3)){continue;}
-                    if (agents.indexOf(agent)<(agents.size()-5) && agents.indexOf(agent)>((agents.size()/2)+1)){continue;}
-                    System.out.println((agents.indexOf(agent)+1)+" "+agent.score);
-                }
-                engine=agents.getFirst().getEngine();
-                update();
-                update(this.getGraphics());
-                newGeneration();
             }
         } else if (e.getSource()==resetButton) {
             engine.reset();

@@ -67,6 +67,7 @@ public class Agent {
             }
         }
         //System.out.println("Mutating new agent");
+        neurons.removeIf(neuron -> neuron.connections.size()<=1 && neurons.indexOf(neuron)>15);
         mutate();
         sortNeurons();
         //for (Neuron neuron:neurons){
@@ -171,28 +172,29 @@ public class Agent {
                 if (neurons.size()<=20 || randNeuronIndex<20){return;}
                 for (Neuron neuron:neurons){
                     if (neuron==neurons.get(randNeuronIndex)){continue;}
-                    for (int connection: neuron.connections){
-                        if (connection<randNeuronIndex){continue;}
-                        if (connection==randNeuronIndex){
-                            neuron.weights.remove(neuron.connections.indexOf(connection));
-                            neuron.connections.remove((Integer) connection);
-                        }else {
-                            neuron.connections.set(neuron.connections.indexOf(connection),connection-1);
-                        }
-                    }
+                    int neuronIndex=neurons.indexOf(neuron);
+                    neuron.connections.removeIf(connection->connection==neuronIndex);
+                    neuron.connections.replaceAll(connection->connection>neuronIndex?connection-1:connection);
                 }
                 neurons.remove(randNeuronIndex);
                 break;
             case 5:
                 //Remove connection
-                for (Neuron neuron:neurons){
+                if (neurons.get(randNeuronIndex).connections.size()<=1){return;}
+                boolean remove=false;
+                outer:for (Neuron neuron:neurons){
                     if (neurons.indexOf(neuron)==neurons.get(randNeuronIndex).connections.get(randConnectionIndex) || neuron==neurons.get(randNeuronIndex)){continue;}
                     for (int connection:neuron.connections){
-                        if (connection==neurons.get(randNeuronIndex).connections.get(randConnectionIndex)){break;}
+                        if (connection==neurons.get(randNeuronIndex).connections.get(randConnectionIndex)){
+                            remove=true;
+                            break outer;
+                        }
                     }
                 }
-                neurons.get(randNeuronIndex).connections.remove(randConnectionIndex);
-                neurons.get(randNeuronIndex).weights.remove(randConnectionIndex);
+                if (remove){
+                    neurons.get(randNeuronIndex).connections.remove(randConnectionIndex);
+                    neurons.get(randNeuronIndex).weights.remove(randConnectionIndex);
+                }
         }
     }
 
@@ -212,5 +214,17 @@ public class Agent {
             score+= engine.getPoints();
             engine.reset();
         }
+    }
+
+    public String toString(){
+        StringBuilder finalString=new StringBuilder();
+        finalString.append("{\n\"agent\":{\n\t\"sorted neurons\":");
+        finalString.append(sortedNeurons.toString()).append(",\n\t\"neurons\":[");
+        for (Neuron neuron:neurons){
+            if (neurons.indexOf(neuron)<16){continue;}
+            finalString.append("\n\t").append(neuron.toString()).append(",");
+        }
+        finalString.append("]\t}\n}");
+        return finalString.toString();
     }
 }

@@ -18,6 +18,7 @@ public class Engine {
 
     public Engine(){
         random2or4();
+        random2or4();
     }
 
     public int[][] getBoard() {
@@ -74,7 +75,7 @@ public class Engine {
             jDir=1;
         }
         int[][] oldBoard=board.clone();
-        System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
+        //System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
         for (int i = 0; i <4; i++) {
             int iLoc=iStart+(i*iDir);
             for (int j =0; j < 4; j++) {
@@ -101,7 +102,7 @@ public class Engine {
                 }
             }
         }
-        System.out.println("New board: "+ Arrays.deepToString(board));
+        //System.out.println("New board: "+ Arrays.deepToString(board));
         boolean added2Or4=false;
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[i].length; j++) {
@@ -192,6 +193,7 @@ public class Engine {
     public void reset(){
         board=new int[][]{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
         points=0;
+        random2or4();
         random2or4();
     }
 
