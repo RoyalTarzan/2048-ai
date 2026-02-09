@@ -222,7 +222,10 @@ public class Agent {
         finalString.append(sortedNeurons.toString()).append(",\n\t\"neurons\":[");
         for (Neuron neuron:neurons){
             if (neurons.indexOf(neuron)<16){continue;}
-            finalString.append("\n\t").append(neuron.toString()).append(",");
+            finalString.append("\n\t").append(neuron.toString());
+            if(neurons.indexOf(neuron)< neurons.size()-1){
+                finalString.append(",");
+            }
         }
         finalString.append("]\t}\n}");
         return finalString.toString();

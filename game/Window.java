@@ -132,11 +132,12 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     }
 
     private void doGeneration() throws IOException {
-        File generationFile=new File("C:\\Users\\dries.meesters\\IdeaProjects\\2048-ai\\src\\generated\\generation_"+generations+".json");
-        generationFile.createNewFile();
+        File generationFile=new File("src\\generated\\generation_"+generations+".json");
+        generationFile.mkdir();
         try {
-            FileWriter fileWriter=new FileWriter("C:\\Users\\dries.meesters\\IdeaProjects\\2048-ai\\src\\generated\\generation_"+generations+".json");
             for (Agent agent:agents){
+                File agentFile=new File(generationFile,"agent_"+(agents.indexOf(agent)+1)+".json");
+                FileWriter fileWriter=new FileWriter(agentFile.getAbsolutePath());
                 fileWriter.append(agent.toString());
             }
         } catch (IOException e) {
