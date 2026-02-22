@@ -1,4 +1,4 @@
-package agent;
+package src.agent;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -21,6 +21,9 @@ public class Neuron {
         this.bias=bias;
         this.connections.addAll(connections);
         this.weights.addAll(weights);
+        while (this.weights.size()<this.connections.size()){
+            weights.add(new Random().nextFloat(-1,1));
+        }
     }
 
     public float getValue(){
@@ -36,25 +39,34 @@ public class Neuron {
             }
         }else {
             for (int connection:connections){
+                float connectionValue=0,weight =0;
                 try{
-                value+=brain.neurons.get(connection).getValue()*
-                        weights.get(connections.indexOf(connection));}
-                catch (IndexOutOfBoundsException e){
-                    for (Neuron neuron: brain.neurons){
-                        System.out.println(brain.neurons.indexOf(neuron)+" "+neuron.connections);
-                    }
+                    connectionValue=brain.neurons.get(connection).getValue();
+                } catch (IndexOutOfBoundsException e){
+                    System.out.println(STR."\{brain.neurons.size()-1} \{connections} There was an invalid connection");
                 }
+                try{
+                    weight=weights.get(connections.indexOf(connection));
+                }catch(IndexOutOfBoundsException e){
+                    System.out.println(STR."Connections:\{connections}, Weights:\{weights}");
+                }
+                value+=connectionValue*
+                        weight;
             }
         }
         value=value+bias;
     }
 
-    public String toString(){
+    public String toString(Agent brain){
         StringBuilder finalString=new StringBuilder();
-        finalString.append("{\n\t\"neuron\":{\n\t\t\"bias\":").append(bias).append(",\n\t\"connections+weights\":[");
+        finalString.append(STR."{\n\t\"neuron_\{brain.neurons.indexOf(this)}\":{\n\t\t\"bias\":\{bias},\n\t\"connections+weights\":[");
         for (int connection:connections){
-            finalString.append("\t{\n\t\t\"connection\":").append(connection)
-                    .append(",\n\t\t\"weight\":").append(weights.get(connections.indexOf(connection))).append("\n\t}");
+            try {
+                finalString.append("\t{\n\t\t\"connection\":").append(connection)
+                        .append(",\n\t\t\"weight\":").append(weights.get(connections.indexOf(connection))).append("\n\t}");
+            }catch (IndexOutOfBoundsException e){
+                System.out.println(STR."Connections:\{connections}, Weights:\{weights}");
+            }
             if (connections.indexOf(connection)<connections.size()-1){
                 finalString.append(",\n");
             }

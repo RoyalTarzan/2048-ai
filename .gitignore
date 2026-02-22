@@ -1,3 +1,4 @@
 /out/*
 /.idea/*
 /2048-ai.iml
+/src/generated/*

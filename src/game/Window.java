@@ -1,6 +1,6 @@
-package game;
+package src.game;
 
-import agent.Agent;
+import src.agent.Agent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,10 +11,7 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Random;
+import java.util.*;
 
 public class Window extends JFrame implements KeyListener,ActionListener {
     public Engine engine;
@@ -35,6 +32,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
     private final Engine ownEngine=new Engine();
     private boolean simulationStarted=false;
     private int generations;
+    private File currentRunFile;
 
     public Window(){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -124,25 +122,29 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         }
         //System.out.println("Agents mutated successfully");
         for (int i = 0; i < halfPopulation; i++) {
-            //System.out.println("Creating new agent: "+(i+1));
+            //System.out.println("Creating new src.agent: "+(i+1));
             agents.add(new Agent(agents.get(new Random().nextInt(0,halfPopulation)),agents.get(new Random().nextInt(0,halfPopulation))));
-            //System.out.println("Created new agent: "+(i+1));
+            //System.out.println("Created new src.agent: "+(i+1));
         }
         update(this.getGraphics());
     }
 
     private void doGeneration() throws IOException {
-        File generationFile=new File("src\\generated\\generation_"+generations+".json");
+        File generationFile=new File(currentRunFile,STR."generation_\{generations}.json");
         generationFile.mkdir();
         try {
             for (Agent agent:agents){
-                File agentFile=new File(generationFile,"agent_"+(agents.indexOf(agent)+1)+".json");
-                FileWriter fileWriter=new FileWriter(agentFile.getAbsolutePath());
-                fileWriter.append(agent.toString());
+                File agentFile=new File(generationFile, STR."agent_\{agents.indexOf(agent) + 1}.json");
+                if(agentFile.createNewFile()){
+                    agentFile.createNewFile();
+                    try(FileWriter fileWriter=new FileWriter(agentFile.getAbsolutePath())){
+                        fileWriter.append(agent.toString());}
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        System.out.println(STR."Started generation \{generations}");
         for (Agent agent:agents){
             agent.calculateScore();
         }
@@ -150,7 +152,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
         for (Agent agent:agents){
             if (agents.indexOf(agent)>4 && agents.indexOf(agent)<((agents.size()/2)-3)){continue;}
             if (agents.indexOf(agent)<(agents.size()-5) && agents.indexOf(agent)>((agents.size()/2)+1)){continue;}
-            System.out.println((agents.indexOf(agent)+1)+" "+agent.score);
+            System.out.println(STR."\{agents.indexOf(agent) + 1} \{agent.score}");
         }
         engine=agents.getFirst().getEngine();
         update();
@@ -167,12 +169,12 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                     agents.add(new Agent());
                     int finalI = i;
                     buttons.add(new JButton());
-                    buttons.get(i).addActionListener((event)->{
+                    buttons.get(i).addActionListener((_)->{
                         engine=agents.get(finalI).getEngine();
                         update();
                         currentAgent=finalI;
                     });
-                    buttons.get(i).setText("Agent "+(finalI+1));
+                    buttons.get(i).setText(STR."Agent \{finalI + 1}");
                     if (50+(i*25)<getSize().getHeight()){
                         buttons.get(i).setBounds(430,50+i*25,100,25);
                     }else if (50+(i-getSize().getHeight())*25<getSize().getHeight()){
@@ -188,8 +190,15 @@ public class Window extends JFrame implements KeyListener,ActionListener {
                 update(this.getGraphics());
                 simulationStarted=true;
                 startButton.setText("Next Gen");
+                String string=new Date().toString();
+                string=string.replace("CET ","");
+                string=string.replace(" ","_").replace(":","-");
+                string=string.strip();
+                currentRunFile=new File(STR."src\\generated\\\{string}");
+                currentRunFile.mkdir();
+                System.out.println(currentRunFile.getPath());
             }else {
-                for (int i = 0; i < 1; i++) {
+                for (int i = 0; i < 10; i++) {
                     try {
                         doGeneration();
                     } catch (IOException ex) {
@@ -206,7 +215,7 @@ public class Window extends JFrame implements KeyListener,ActionListener {
             update();
         } else if (e.getSource()==ownEngineButton){
             engine=ownEngine;
-            updateButton.addActionListener((event)->update());
+            updateButton.addActionListener((_)->update());
         }
     }
 }

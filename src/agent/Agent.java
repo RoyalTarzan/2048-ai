@@ -1,6 +1,6 @@
-package agent;
+package src.agent;
 
-import game.Engine;
+import src.game.Engine;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -27,9 +27,6 @@ public class Agent {
                     connections));
         }
         sortNeurons();
-        //for (Neuron neuron:neurons){
-        //    System.out.println(neurons.indexOf(neuron)+" "+neuron.connections);
-        //}
     }
 
     public Agent(Agent parent1, Agent parent2){
@@ -49,9 +46,9 @@ public class Agent {
             }
             for (int i = 0; i < parent2.neurons.size()-parent1.neurons.size(); i++) {
                 if (new Random().nextInt(0,4)==2){continue;}
-                neurons.add(new Neuron((parent2.neurons.get(i).bias)/2,
-                        parent2.neurons.get(i).connections,
-                        parent2.neurons.get(i).weights));
+                neurons.add(new Neuron((parent2.neurons.get(i+parent1.neurons.size()).bias)/2,
+                        parent2.neurons.get(i+parent1.neurons.size()).connections,
+                        parent2.neurons.get(i+parent1.neurons.size()).weights));
             }
         } else {
             for (int i=0;i<parent2.neurons.size();i++){
@@ -61,18 +58,14 @@ public class Agent {
             }
             for (int i = 0; i < parent1.neurons.size()-parent2.neurons.size(); i++) {
                 if (new Random().nextInt(0,4)==2){continue;}
-                neurons.add(new Neuron((parent1.neurons.get(i).bias)/2,
-                        parent1.neurons.get(i).connections,
-                        parent1.neurons.get(i).weights));
+                neurons.add(new Neuron((parent1.neurons.get(i+parent2.neurons.size()).bias)/2,
+                        parent1.neurons.get(i+parent2.neurons.size()).connections,
+                        parent1.neurons.get(i+parent2.neurons.size()).weights));
             }
         }
-        //System.out.println("Mutating new agent");
-        neurons.removeIf(neuron -> neuron.connections.size()<=1 && neurons.indexOf(neuron)>15);
+        deleteEmptyNeurons();
         mutate();
         sortNeurons();
-        //for (Neuron neuron:neurons){
-        //    System.out.println(neurons.indexOf(neuron)+" "+neuron.connections);
-        //}
     }
 
     private void sortNeurons(){
@@ -84,7 +77,6 @@ public class Agent {
         ArrayList<Integer> removedNeuronIndex=new ArrayList<>();
         int i=0;
         while (!Objects.equals(copyOfNeurons, new ArrayList<Neuron[]>()) && i<100) {
-            //System.out.println("Try "+(i+1)+" to sort neurons.");
             for (Neuron[] neuron:copyOfNeurons) {
                 if (!neuron[1].connections.isEmpty()) {
                     continue;
@@ -98,14 +90,10 @@ public class Agent {
                 }
                 removedNeuronIndex.add(copyOfNeurons.indexOf(neuron));
             }
-            //for (Neuron[] neuron:copyOfNeurons){
-            //    System.out.println(neurons.indexOf(neuron[0]));
-            //}
             copyOfNeurons.removeIf(neuron -> removedNeuronIndex.contains(copyOfNeurons.indexOf(neuron)));
             removedNeuronIndex.clear();
             i++;
         }
-        //System.out.println(sortedNeurons);
     }
 
     public void calculateOutput(){
@@ -116,15 +104,12 @@ public class Agent {
 
     public boolean outputMove(){
         calculateOutput();
-            /*System.out.print("Current neuron: "+neurons.get(i));
-            System.out.print(", value: "+neurons.get(i).value);
-            System.out.println(", biggest value: "+biggest+", current neuron: "+currentNeuron);*/
         ArrayList<Neuron> outputNeurons=new ArrayList<>();
         for (int i = 16; i < 20; i++) {
             outputNeurons.add(neurons.get(i));
         }
         outputNeurons.sort(Comparator.comparingDouble(neuron->neuron.value));
-        return switch (neurons.indexOf(outputNeurons.get(0))) {
+        return switch (neurons.indexOf(outputNeurons.getFirst())) {
             case 16 -> {lastMove = "Left";yield engine.move(0, 1);}
             case 17 -> {lastMove = "Up";yield engine.move(1, 0);}
             case 18 -> {lastMove = "Right";yield engine.move(0, -1);}
@@ -133,13 +118,14 @@ public class Agent {
         };
     }
 
+    @SuppressWarnings("TextLabelInSwitchStatement")
     public void mutate(){
         if (new Random().nextInt(0,10)>1){return;}
         int randNeuronIndex=new Random().nextInt(16,neurons.size());
-        System.out.println(randNeuronIndex+":"+neurons.get(randNeuronIndex).connections);
+        System.out.println(STR."\{randNeuronIndex}:\{neurons.get(randNeuronIndex).connections}");
         int randConnectionIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).connections.size());
         int randWeightIndex=new Random().nextInt(0,neurons.get(randNeuronIndex).weights.size());
-        switch (new Random().nextInt(0,6)){
+        switchS:switch (new Random().nextInt(0,6)){
             case 0:
                 //Adds new neuron
                 ArrayList<Integer> connections=new ArrayList<>();
@@ -160,27 +146,54 @@ public class Agent {
             case 3:
                 //Add connection
                 int randNeuronIndex2=new Random().nextInt(0,neurons.size());
-                if (randNeuronIndex2==randNeuronIndex || (randNeuronIndex2<=19 && randNeuronIndex2>=16) || neurons.get(randNeuronIndex).connections.contains(randNeuronIndex2)){return;}
+                if (randNeuronIndex2==randNeuronIndex ||
+                        (15<randNeuronIndex2 && randNeuronIndex2<20) ||
+                        neurons.get(randNeuronIndex).connections.contains(randNeuronIndex2)){break;}
                 for (int connection:neurons.get(randNeuronIndex2).connections) {
-                    if (randNeuronIndex == connection){return;}
+                    if (randNeuronIndex == connection){break switchS;}
                 }
                 neurons.get(randNeuronIndex).connections.add(randNeuronIndex2);
                 neurons.get(randNeuronIndex).weights.add(new Random().nextFloat(-1,1));
                 break;
             case 4:
                 //Remove neuron
-                if (neurons.size()<=20 || randNeuronIndex<20){return;}
+                if (neurons.size()<=20 || randNeuronIndex<20){break;}
+                ArrayList<Integer> emptyNeurons=new ArrayList<>();
                 for (Neuron neuron:neurons){
                     if (neuron==neurons.get(randNeuronIndex)){continue;}
                     int neuronIndex=neurons.indexOf(neuron);
-                    neuron.connections.removeIf(connection->connection==neuronIndex);
+                    ArrayList<Integer> removedConnections=new ArrayList<>();
+                    for (int connection:neuron.connections){
+                        if (connection==neuronIndex){removedConnections.add(neuron.connections.indexOf(connection));}
+                    }
+                    neuron.connections.removeIf(removedConnections::contains);
+                    neuron.weights.removeIf(weight1->removedConnections.contains(neuron.weights.indexOf(weight1)));
                     neuron.connections.replaceAll(connection->connection>neuronIndex?connection-1:connection);
+                    if (neuron.connections.isEmpty() && neurons.indexOf(neuron)>19){
+                        emptyNeurons.add(neurons.indexOf(neuron));
+                    }
+                }
+                boolean allDeleted=false;
+                while (!allDeleted){
+                    for (Neuron neuron:neurons){
+                        ArrayList<Integer> removedConnections=new ArrayList<>();
+                        for (int connection:neuron.connections){
+                            if (emptyNeurons.contains(connection)){removedConnections.add(neuron.connections.indexOf(connection));}
+                        }
+                        neuron.connections.removeIf(removedConnections::contains);
+                        neuron.weights.removeIf(weight1->removedConnections.contains(neuron.weights.indexOf(weight1)));
+                    }
+                    neurons.removeIf(neuron -> emptyNeurons.contains(neurons.indexOf(neuron)));
+                    for (Neuron neuron:neurons){
+                        if (neuron.connections.isEmpty()&& neurons.indexOf(neuron)>19){emptyNeurons.add(neurons.indexOf(neuron));}
+                    }
+                    if (emptyNeurons.isEmpty()){allDeleted=true;}
                 }
                 neurons.remove(randNeuronIndex);
                 break;
             case 5:
                 //Remove connection
-                if (neurons.get(randNeuronIndex).connections.size()<=1){return;}
+                if (!(neurons.get(randNeuronIndex).connections.size()>1)){break;}
                 boolean remove=false;
                 outer:for (Neuron neuron:neurons){
                     if (neurons.indexOf(neuron)==neurons.get(randNeuronIndex).connections.get(randConnectionIndex) || neuron==neurons.get(randNeuronIndex)){continue;}
@@ -196,6 +209,8 @@ public class Agent {
                     neurons.get(randNeuronIndex).weights.remove(randConnectionIndex);
                 }
         }
+        deleteEmptyNeurons();
+        sortNeurons();
     }
 
     public Engine getEngine(){
@@ -222,12 +237,39 @@ public class Agent {
         finalString.append(sortedNeurons.toString()).append(",\n\t\"neurons\":[");
         for (Neuron neuron:neurons){
             if (neurons.indexOf(neuron)<16){continue;}
-            finalString.append("\n\t").append(neuron.toString());
+            finalString.append("\n\t").append(neuron.toString(this));
             if(neurons.indexOf(neuron)< neurons.size()-1){
                 finalString.append(",");
             }
         }
         finalString.append("]\t}\n}");
         return finalString.toString();
+    }
+
+    private void deleteEmptyNeurons(){
+        ArrayList<Integer> emptyNeurons=new ArrayList<>();
+        for (Neuron neuron:neurons){
+            if (neurons.indexOf(neuron)>19 && neuron.connections.isEmpty()){
+                emptyNeurons.add(neurons.indexOf(neuron));
+            }
+        }
+        boolean allDeleted=false;
+        while (!allDeleted){
+            for (Neuron neuron:neurons){
+                ArrayList<Integer> removedConnections=new ArrayList<>();
+                for (int connection:neuron.connections){
+                    if (emptyNeurons.contains(connection) || neuron.connections.indexOf(connection)>=neurons.size()) {
+                        removedConnections.add(neuron.connections.indexOf(connection));
+                    }
+                }
+                neuron.connections.removeIf(removedConnections::contains);
+                neuron.weights.removeIf(weight1->removedConnections.contains(neuron.weights.indexOf(weight1)));
+            }
+            neurons.removeIf(neuron -> emptyNeurons.contains(neurons.indexOf(neuron)));
+            for (Neuron neuron:neurons){
+                if (neuron.connections.isEmpty()&& neurons.indexOf(neuron)>19){emptyNeurons.add(neurons.indexOf(neuron));}
+            }
+            if (emptyNeurons.isEmpty()){allDeleted=true;}
+        }
     }
 }
