@@ -1,22 +1,21 @@
 package src.game;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
-public class Engine {
-    int[][] board=new int[][]{
-            {0,0,0,0},
-            {0,0,0,0},
-            {0,0,0,0},
-            {0,0,0,0}};
-    boolean[][] combined=new boolean[][]{
-            {false,false,false,false},
-            {false,false,false,false},
-            {false,false,false,false},
-            {false,false,false,false}};
-    int points=0;
+import static src.util.ListFunctions.getRandom;
 
-    public Engine(){
+public class Engine {
+    int points=0;
+    public int size;
+    int[][] board;
+
+    public Engine(int size){
+        this.board=new int[size][size];
         random2or4();
+        this.size=size;
         random2or4();
     }
 
@@ -24,187 +23,145 @@ public class Engine {
         return board;
     }
 
-    /*public void setBoard(int[][] board){
-        this.board=board;
-    }*/
-
     public int getPoints() {
         return points;
     }
 
-    public void moveRight(){}
-
-    public void moveLeft() {}
-
-    public void moveDown() {}
-
-    public void moveUp() {}
-
-    public boolean move(int up,int left){
-        int iDis;
-        int iStart;
-        int iDir;
-        int jDis;
-        int jStart;
-        int jDir;
-        if (1==up){
-            iStart=3;
-            iDis=-1;
-            iDir=-1;
-        }else if(up==-1){
-            iStart=0;
-            iDis=1;
-            iDir=1;
-        }else {
-            iStart=0;
-            iDis=0;
-            iDir=1;
+    public boolean moveRight(){
+        int[][] oldBoard=new int[size][];
+        for (int i = 0; i < size; i++) {
+            oldBoard[i]=board[i].clone();
         }
-        if (left==1){
-            jStart=3;
-            jDis=-1;
-            jDir=-1;
-        }else if(left==-1){
-            jStart=0;
-            jDis=1;
-            jDir=1;
-        }else {
-            jStart=0;
-            jDis=0;
-            jDir=1;
-        }
-        int[][] oldBoard=board.clone();
-        //System.out.println("Old board: "+ Arrays.deepToString(oldBoard));
-        for (int i = 0; i <4; i++) {
-            int iLoc=iStart+(i*iDir);
-            for (int j =0; j < 4; j++) {
-                int jLoc=jStart+(j*jDir);
-                try{
-                    if(board[iLoc+iDis][jLoc+jDis]==0){
-                        board[iLoc+iDis][jLoc+jDis]=board[iLoc][jLoc];
-                        board[iLoc][jLoc]=0;
-                        if ( iLoc>0&&board[iLoc-iDis][jLoc-jDis]!=0){
-                            board[iLoc][jLoc]=board[iLoc-iDis][jLoc-jDis];
-                            board[iLoc-iDis][jLoc-jDis]=0;
-                        }
-                    }else if (board[iLoc+iDis][jLoc+jDis]==board[iLoc][jLoc]&&!combined[iLoc][jLoc]){
-                        board[iLoc+iDis][jLoc+jDis]=board[iLoc][jLoc]*2;
-                        board[iLoc][jLoc]=0;
-                        if ( iLoc>0&&board[iLoc-iDis][jLoc-jDis]!=0){
-                            board[iLoc][jLoc]=board[iLoc-iDis][jLoc-jDis];
-                            board[iLoc-iDis][jLoc-jDis]=0;
-                        }
-                        combined[iLoc+iDis][jLoc+jDis]=true;
-                        points+=board[iLoc+iDis][jLoc+jDis];
-                    }
-                }   catch (ArrayIndexOutOfBoundsException _){
-                }
+        for (int i=0;i< board.length;i++){
+            int[] row=new int[board[i].length];
+            for (int j=0;j<board[i].length;j++){
+                row[j]=board[i][board[i].length-1-j];
+            }
+            row=slideLeft(row);
+            for (int j=0;j<row.length;j++){
+                board[i][board[i].length-1-j]=row[j];
             }
         }
-        //System.out.println("New board: "+ Arrays.deepToString(board));
-        boolean added2Or4=false;
+        if (Arrays.deepEquals(oldBoard, board)){
+            return false;
+        }
+        random2or4();
+        return true;
+    }
+
+    public boolean moveLeft(){
+        int[][] oldBoard=new int[size][];
+        for (int i = 0; i < size; i++) {
+            oldBoard[i]=board[i].clone();
+        }
+        for (int i=0;i< board.length;i++){
+            board[i]=slideLeft(board[i]);
+        }
+        if (Arrays.deepEquals(oldBoard, board)){
+            return false;
+        }
+        random2or4();
+        return true;
+    }
+
+    public int[] slideLeft(int[] row) {
+        int[] result=new int[row.length];
+        int pos=0;
+        for (int val:row){
+            if (val!=0){result[pos++]=val;}
+        }
+        row=result;
+        for (int i=0;i< row.length-1;i++){
+            if (row[i]==row[i+1]){
+                row[i]*=2;
+                points += row[i];
+                row[i+1]=0;
+            }
+        }
+        pos=0;
+        result=new int[row.length];
+        for (int val:row){
+            if (val!=0){result[pos++]=val;}
+        }
+        return result;
+    }
+
+    public boolean moveDown() {
+        int[][] oldBoard=new int[size][];
+        for (int i = 0; i < size; i++) {
+            oldBoard[i]=board[i].clone();
+        }
+        for (int i = 0; i < board[0].length; i++) {
+            int[] result=new int[board.length];
+            for (int j = 0; j < board.length; j++) {
+                result[j]=board[board.length-1-j][i];
+            }
+            result=slideLeft(result);
+            for (int j = 0; j < board.length; j++) {
+                board[j][i]=result[result.length-j-1];
+            }
+        }
+        if (Arrays.deepEquals(oldBoard, board)){
+            return false;
+        }
+        random2or4();
+        return true;
+    }
+
+    public boolean moveUp() {
+        int[][] oldBoard=new int[size][];
         for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                if (board[i][j]==oldBoard[i][j]){continue;}
-                random2or4();
-                System.out.println("Added random 2 or 4");
-                added2Or4=true;
-                break;
-            }
-            if (added2Or4){break;}
+            oldBoard[i]=board[i].clone();
         }
-        combined=new boolean[][]{
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false},
-                {false,false,false,false}};
-        return added2Or4;
+        for (int i = 0; i < board[0].length; i++) {
+            int[] result=new int[board.length];
+            for (int j = 0; j < board.length; j++) {
+                result[j]=board[j][i];
+            }
+            result=slideLeft(result);
+            for (int j = 0; j < board.length; j++) {
+                board[j][i]=result[j];
+            }
+        }
+        if (Arrays.deepEquals(oldBoard, board)){
+            return false;
+        }
+        random2or4();
+        return true;
     }
 
     public boolean lose(){
-        if (lowest()==0){
-            return false;
-        }
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                try{
-                    if (board[i][j]!=board[i][j+1]||board[i][j+1]!=0){
-                        return true;
-                    }
-                }catch (ArrayIndexOutOfBoundsException e){
-                    if (board[i][j]!=board[i][j-1]||board[i][j-1]!=0){
-                        return true;
-                    }
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j]==0||
+                        j<size-1&&board[i][j]==board[i][j+1]||
+                        i<size-1&&board[i][j]==board[i+1][j]){
+                    return false;
                 }
-                try{
-                    if (board[i][j]!=board[i][j-1]||board[i][j-1]!=0){
-                        return true;
-                    }
-                }catch (ArrayIndexOutOfBoundsException ignored){}
-                try {
-                    if (board[i][j] != board[i + 1][j]){
-                        return true;
-                    }
-                }catch (ArrayIndexOutOfBoundsException e){
-                    if (board[i][j]!=board[i-1][j]||board[i-1][j]!=0){
-                        return true;
-                    }
-                }
-                try {
-                    if (board[i][j]!=board[i-1][j]||board[i-1][j]!=0){
-                        return true;
-                    }
-                }catch (ArrayIndexOutOfBoundsException ignored){}
             }
         }
-        return false;
+        return true;
     }
 
     public void random2or4(){
-        int[][] oldBoard=board;
         Random random=new Random();
-        if (lowest()==0){
-            if (random.nextInt(0,10)<9){
-                for (int i = 0; i < 4; i++) {
-                    for (int j = 0; j < 4; j++) {
-                        if (random.nextInt(0,16)==1&&board[i][j]==0){
-                            board[i][j]=2;
-                            return;
-                        }
-                    }
+        List<int[]> emptyCells=new ArrayList<>();
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j]==0){
+                    emptyCells.add(new int[]{i,j});
                 }
-            }else {
-                for (int i = 0; i < 4; i++) {
-                    for (int j = 0; j < 4; j++) {
-                        if (random.nextInt(0,16)==1&&board[i][j]==0){
-                            board[i][j]=4;
-                            return;
-                        }
-                    }
-                }
-            }
-            if (oldBoard==board){
-                random2or4();
             }
         }
+        if (emptyCells.isEmpty()){return;}
+        int[] cell=getRandom(emptyCells);
+        board[cell[0]][cell[1]]=random.nextInt(10)<9?2:4;
     }
 
     public void reset(){
-        board=new int[][]{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+        board=new int[this.size][this.size];
         points=0;
         random2or4();
         random2or4();
-    }
-
-    private int lowest(){
-        int lowest=board[0][0];
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                if (board[i][j]<lowest){
-                    lowest=board[i][j];
-                }
-            }
-        }
-        return lowest;
     }
 }
