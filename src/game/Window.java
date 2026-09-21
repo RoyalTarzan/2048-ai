@@ -1,6 +1,7 @@
 package src.game;
 
 import src.agent.Agent;
+import src.util.LineGraph;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -14,6 +15,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static src.util.ListFunctions.averageScore;
 
@@ -30,23 +33,23 @@ public class Window extends JFrame implements ActionListener {
     public final JLabel points=new JLabel();
     public final JLabel maxScoreLabel =new JLabel();
     public ArrayList<Agent> agents=new ArrayList<>();
-    public ArrayList<JButton> buttons=new ArrayList<>();
     public final JButton startButton=new JButton();
     public final JButton resetButton=new JButton();
     public final JButton updateButton=new JButton();
     public final JButton ownEngineButton=new JButton();
     private final JButton autoGen=new JButton();
     private final JButton stopSim=new JButton();
+    private final JButton switchRepopulation=new JButton();
+    private boolean sexualRepopulation=true;
     private FunctionType functionType=FunctionType.CUSTOM;
     private int functionTypeValue=5;
     private int currentAgent;
     private boolean simulationStarted=false;
-    private int generations;
+    public int generations;
     private double maxScore=0;
     private File currentRunFile;
     private int numberOfAgents =10;
     private float populationProportion =0.5f;
-    private int numberOfGames =50;
     private final JLabel numberOfAgentsLabel=new JLabel();
     private final JLabel populationProportionLabel=new JLabel();
     private final JLabel numberOfGamesLabel=new JLabel();
@@ -55,23 +58,45 @@ public class Window extends JFrame implements ActionListener {
     private final JLabel proportionalLabel=new JLabel();
     private final JLabel minMovesLabel=new JLabel();
     private final JComboBox<String> runSelector=new JComboBox<>();
+    private final JComboBox<Agent> agentSelector=new JComboBox<>();
     private final JComboBox<String> genSelector=new JComboBox<>();
     private final JScrollBar populationProportionBar=new JScrollBar(Adjustable.HORIZONTAL);
-    private final Timer autoGenTimer=new Timer(1000,(_)-> new SwingWorker<Void,Void>(){
+    private final Timer autoGenTimer=new Timer(1000,(_)-> new SwingWorker<Void, Void>(){
         @Override
         protected Void doInBackground(){
-            autoGenTimer.stop();
+            if (generating){return null;}
+            generating=true;
             doGeneration();
             return null;
         }
         @Override
         protected void done(){
-            if (autoGen.getText().equals("Stop"))autoGenTimer.start();
+            generating=false;
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+            if (stopRequested){
+                stopRequested=false;
+                try {
+                    stopSimulation();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else if (autoGenRunning) {
+                autoGenTimer.restart();
+            }
         }
     }.execute());
     private int offset=10;
     private int proportional=3;
     private int minMoves=50;
+    private final LineGraph graph=new LineGraph();
+    private boolean autoGenRunning=false;
+    private boolean stopRequested=false;
+    private boolean generating=false;
+    private int additionalMoves=0;
 
     public Window(int size){
         JComboBox<FunctionType> functionTypeSelector = new JComboBox<>();
@@ -106,7 +131,7 @@ public class Window extends JFrame implements ActionListener {
         JScrollBar numberOfGamesBar = new JScrollBar(Adjustable.HORIZONTAL);
         numberOfGamesBar.addAdjustmentListener(event->{
             if (simulationStarted){return;}
-            numberOfGames = event.getValue() ;
+            int numberOfGames = event.getValue();
             Agent.setNumberOfGames(numberOfGames);
             numberOfGamesLabel.setText(String.valueOf(numberOfGames));
         });
@@ -138,17 +163,22 @@ public class Window extends JFrame implements ActionListener {
         runSelector.addItemListener(itemEvent->{
             if (itemEvent.getStateChange()== ItemEvent.DESELECTED){genSelector.setVisible(false);return;}
             genSelector.removeAllItems();
-            File run=new File(STR."src\\generated\\\{runSelector.getSelectedItem()}");
+            File run=new File("src\\generated\\"+runSelector.getSelectedItem());
             File[] generation=run.listFiles();
             assert generation != null;
             for (File generationFile : generation) {
-                genSelector.addItem(generationFile.getPath().replace(STR."src\\generated\\\{runSelector.getSelectedItem()}\\",""));
+                genSelector.addItem(generationFile.getPath().replace("src\\generated\\"+runSelector.getSelectedItem()+"\\",""));
             }
             update(getGraphics());
         });
+        agentSelector.addItemListener(_->{
+            engine=((Agent) Objects.requireNonNull(agentSelector.getSelectedItem())).getEngine();
+            update();
+            currentAgent=agents.indexOf(((Agent) Objects.requireNonNull(agentSelector.getSelectedItem())));
+        });
         File generated=new File("src\\generated");
         if (!generated.mkdir()){
-            System.out.println("Shit");
+            System.out.println("Shit1");
         }
         File[] previousRuns=generated.listFiles();
         assert previousRuns != null;
@@ -161,7 +191,7 @@ public class Window extends JFrame implements ActionListener {
         this.setBackground(Color.cyan);
         this.setOpacity(1.0f);
         this.setLayout(null);
-        this.setSize(Toolkit.getDefaultToolkit().getScreenSize());
+        this.setSize(Math.min(Toolkit.getDefaultToolkit().getScreenSize().width,1205), Math.min(Toolkit.getDefaultToolkit().getScreenSize().height, 955));
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,0),"left");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,0),"right");
@@ -200,6 +230,10 @@ public class Window extends JFrame implements ActionListener {
         stopSim.setText("Stop Sim");
         stopSim.setToolTipText("Stops the current run and writes the final generation and scores to files");
         stopSim.setVisible(true);
+        switchRepopulation.setBounds(330,550,100,30);
+        switchRepopulation.setText("Sexual");
+        switchRepopulation.setToolTipText("Switches what type of repopulation is used: sexual (2 parents) or non-sexual(1 parent)");
+        switchRepopulation.setVisible(true);
         updateButton.setBounds(230,520,100,30);
         updateButton.setText("Update");
         updateButton.setToolTipText("Advances the current game 1 step if an agent is selected");
@@ -248,6 +282,7 @@ public class Window extends JFrame implements ActionListener {
         numberOfGamesBar.setVisible(true);
         numberOfGamesBar.setValue(50);
         numberOfGamesLabel.setBounds(405,620,25,20);
+        int numberOfGames = 50;
         numberOfGamesLabel.setText(String.valueOf(numberOfGames));
         numberOfGamesLabel.setVisible(true);
         functionTypeValueBar.setBlockIncrement(1);
@@ -290,6 +325,14 @@ public class Window extends JFrame implements ActionListener {
         minMovesLabel.setBounds(405,700,25,20);
         minMovesLabel.setText(String.valueOf(minMoves));
         minMovesLabel.setVisible(true);
+        agentSelector.setBounds(30,720,400,20);
+        agentSelector.setToolTipText("Selects an agents to be shown and inspected");
+        agentSelector.setVisible(true);
+
+        autoGenTimer.setRepeats(false);
+
+        graph.setBounds(430,10,getWidth()-450,500);
+        graph.setVisible(true);
 
         for (int i = 0; i < engine.size; i++) {
             for (int j = 0; j < engine.size; j++) {
@@ -307,10 +350,12 @@ public class Window extends JFrame implements ActionListener {
         startButton.addActionListener(this);
         resetButton.addActionListener(this);
         updateButton.addActionListener(this);
+        updateButton.addActionListener((_)->update());
         ownEngineButton.addActionListener(this);
         autoGen.addActionListener(this);
         stopSim.addActionListener(this);
         printScoresButton.addActionListener(this);
+        switchRepopulation.addActionListener(this);
         this.add(label);
         this.setVisible(true);
         this.add(resetButton);
@@ -337,6 +382,9 @@ public class Window extends JFrame implements ActionListener {
         this.add(proportionalBar);
         this.add(offsetLabel);
         this.add(offsetBar);
+        this.add(switchRepopulation);
+        this.add(graph);
+        this.add(agentSelector);
         this.engine=ownEngine;
         update();
     }
@@ -350,7 +398,7 @@ public class Window extends JFrame implements ActionListener {
         }
         points.setText(String.valueOf(engine.getPoints()));
         if (engine.lose()){
-            points.setText(STR."\{points.getText()}You Lost!");
+            points.setText(points.getText()+" You Lost!");
         }
     }
 
@@ -360,53 +408,59 @@ public class Window extends JFrame implements ActionListener {
             agents.remove(biasedRandInt((int)(populationProportion*0.8),agents.size()));
         }
         while (agents.size()< numberOfAgents){
-            agents.add(new Agent(agents.get(biasedRandInt(populationProportion,0))));
+            if (sexualRepopulation){
+                agents.add(new Agent(agents.get(biasedRandInt(populationProportion,0)),agents.get(biasedRandInt(populationProportion,0)),this));
+            }else agents.add(new Agent(agents.get(biasedRandInt(populationProportion,0)),this));
         }
     }
 
     private void doGeneration() {
-        int moves=Math.max(generations/proportional+offset, minMoves);
+        int moves=Math.max(generations/proportional+offset, minMoves+additionalMoves);
         if (!simulationStarted){startSimulation();}
-        System.out.println(STR."Started generation \{generations+1}");
-        agents.parallelStream().forEach(agent -> agent.calculateScore(moves));
+        System.out.println("Started generation "+(generations+1));
+        AtomicBoolean reachedMaxMoves= new AtomicBoolean(false);
+        agents.parallelStream().forEach(agent -> {
+            if (agent.calculateScore(moves)) {
+                reachedMaxMoves.set(true);
+            }
+        });
+        if (reachedMaxMoves.get()){
+            additionalMoves++;
+        }
         agents.sort(Comparator.comparingDouble(agent -> agent.score*-1));
         for (Agent agent:agents){
             if (agents.indexOf(agent)>4 && agents.indexOf(agent)<((agents.size()/2)-3)){continue;}
             if (agents.indexOf(agent)<(agents.size()-5) && agents.indexOf(agent)>((agents.size()/2)+1)){continue;}
-            System.out.println(STR."\{agents.indexOf(agent) + 1} \{agent.score}");
+            System.out.println((agents.indexOf(agent) + 1)+" "+agent.score);
         }
         if (generations%50==49){
             agentsToFile();
         }
+        double[] scores=new double[3];
         maxScoreGeneration.add(agents.getFirst().score);
+        scores[0]=agents.getFirst().score;
         minScoreGeneration.add(agents.getLast().score);
+        scores[1]=agents.getLast().score;
         averageScoreGeneration.add(averageScore(agents));
+        scores[2]=averageScore(agents);
         if (agents.getFirst().score>maxScore){
             maxScore=agents.getFirst().score;
         }
         maxScoreAllTime.add(maxScore);
-        maxScoreLabel.setText(STR."Maximum Score Achieved: \{(float)maxScore}, Moves: \{moves}");
+        SwingUtilities.invokeLater(()->{
+            graph.addDataPoint(scores);
+            maxScoreLabel.setText("Maximum Score Achieved:"+ (float)maxScore+", Moves: "+moves);
+            update();
+        });
         engine=agents.getFirst().getEngine();
-        update();
         newGeneration();
         generations++;
     }
 
     private void startSimulation(){
-        int usableHeight= ((getHeight()-50)/25)*25;
-        int usableWidth=((getWidth())/100)*100;
         for (int i = 0; i < numberOfAgents; i++) {
             agents.add(new Agent(engine.size));
-            int finalI = i;
-            buttons.add(new JButton());
-            buttons.get(i).addActionListener((_)->{
-                engine=agents.get(finalI).getEngine();
-                update();
-                currentAgent=finalI;
-            });
-            buttons.get(i).setText(STR."Agent \{finalI + 1}");
-            buttons.get(i).setBounds((430+(i/(usableHeight/25))*100)%usableWidth,(i*25)%usableHeight,100,25);
-            add(buttons.get(i));
+            agentSelector.addItem(agents.getLast());
         }
         this.requestFocus();
         update(this.getGraphics());
@@ -415,10 +469,11 @@ public class Window extends JFrame implements ActionListener {
         String string= new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
         string=string.replace(" ","_").replace(":","-");
         string=string.strip();
-        currentRunFile=new File(STR."src\\generated\\\{string}");
+        currentRunFile=new File("src\\generated\\"+string);
         if(!currentRunFile.mkdir()){
-            System.out.println("Shit");
+            System.out.println("Shit2");
         }
+        graph.clearData();
         System.out.println(currentRunFile.getPath());
         agentsToFile();
     }
@@ -426,11 +481,11 @@ public class Window extends JFrame implements ActionListener {
     private void printScores(){
         File runScores=new File(currentRunFile,"runScores.txt");
         try(FileWriter fileWriter=new FileWriter(runScores.getAbsoluteFile(),true)){
-            fileWriter.append(STR."Scores at generation \{generations+1}\n");
-            fileWriter.append(STR."\{maxScoreGeneration.toString()}\n");
-            fileWriter.append(STR."\{minScoreGeneration.toString()}\n");
-            fileWriter.append(STR."\{averageScoreGeneration.toString()}\n");
-            fileWriter.append(STR."\{maxScoreAllTime.toString()}\n");
+            fileWriter.append("Scores at generation").append(String.valueOf(generations + 1)).append("\n");
+            fileWriter.append(maxScoreGeneration.toString()).append("\n");
+            fileWriter.append(minScoreGeneration.toString()).append("\n");
+            fileWriter.append(averageScoreGeneration.toString()).append("\n");
+            fileWriter.append(maxScoreAllTime.toString()).append("\n");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -441,6 +496,7 @@ public class Window extends JFrame implements ActionListener {
         agentsToFile();
         printScores();
         agents.clear();
+        autoGenTimer.stop();
         runSelector.addItem(currentRunFile.getPath().replace("src\\generated\\",""));
         maxScoreGeneration.clear();
         minScoreGeneration.clear();
@@ -453,13 +509,13 @@ public class Window extends JFrame implements ActionListener {
     }
 
     private void agentsToFile(){
-        File generationFile=new File(currentRunFile,STR."generation_\{generations+1}");
+        File generationFile=new File(currentRunFile,"generation_"+(generations+1));
         if(!generationFile.mkdir()){
-            System.out.println("Shit");
+            System.out.println("Shit3");
         }
         try {
             for (Agent agent:agents){
-                File agentFile=new File(generationFile, STR."agent_\{agents.indexOf(agent) + 1}.json");
+                File agentFile=new File(generationFile, "agent_"+(agents.indexOf(agent) + 1)+".json");
                 if(agentFile.createNewFile()){
                     try(FileWriter fileWriter=new FileWriter(agentFile.getAbsolutePath())){
                         fileWriter.append(agent.toString(0));}
@@ -476,6 +532,7 @@ public class Window extends JFrame implements ActionListener {
             if (!simulationStarted){
                 startSimulation();
             }else {
+                if (generating)return;
                 doGeneration();
             }
         } else if (e.getSource()==resetButton) {
@@ -488,28 +545,35 @@ public class Window extends JFrame implements ActionListener {
             update();
         } else if (e.getSource()==ownEngineButton){
             engine=ownEngine;
-            updateButton.addActionListener((_)->update());
         } else if (e.getSource()==autoGen) {
-            if (autoGenTimer.isRunning()){
+            if (autoGenRunning){
                 autoGenTimer.stop();
+                autoGenRunning=false;
                 autoGen.setText("Auto Gen");
             }else {
-                autoGenTimer.start();
+                autoGenRunning=true;
                 autoGen.setText("Stop");
+                autoGenTimer.restart();
             }
         } else if (e.getSource()==stopSim) {
-            try {
-                if (autoGenTimer.isRunning()){
-                    autoGenTimer.stop();
-                    autoGen.setText("Auto Gen");
+            autoGenRunning=false;
+            autoGenTimer.stop();
+            autoGen.setText("Auto Gen");
+            if (generating){
+                stopRequested=true;
+            }else {
+                try {
+                    stopSimulation();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
                 }
-                stopSimulation();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
             }
         } else if (e.getSource()==printScoresButton) {
             agentsToFile();
             printScores();
+        } else if (e.getSource()==switchRepopulation) {
+            sexualRepopulation=!sexualRepopulation;
+            switchRepopulation.setText(sexualRepopulation?"Sexual":"non-Sexual");
         }else {
             System.out.println(e.paramString());
         }

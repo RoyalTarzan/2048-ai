@@ -58,7 +58,7 @@ public class Neuron {
         if(this.type==NeuronType.INPUT){
             int i= Integer.parseInt(this.id.replace("in",""));
             int size=brain.size;
-            value = brain.getEngine().getBoard()[(int) (((double) ((i) / size)) % size)][i % size] == 0 ? 1 : ((float) 1 / brain.getEngine().getBoard()[(int) (((double) ((i) / size)) % size)][i % size]);
+            value = brain.getEngine().getBoard()[(int) (((double) ((i) / size)) % size)][i % size] == 0 ? 0 : (float) ((Math.log(brain.getEngine().getBoard()[(int) (((double) ((i) / size)) % size)][i % size]) / Math.log(2))/ (size*size));
             return;
         }
         value=0;
@@ -66,18 +66,25 @@ public class Neuron {
             value+=brain.getWithId(conn.getKey()).value* conn.getValue();
         }
         value+=this.bias;
+        value= (float) Math.tanh(value);
     }
 
     public String toString(int indent){
         StringBuilder finalString=new StringBuilder();
-        finalString.append(STR."\{"\t".repeat(indent)}\"\{this.id}\":{\n\{"\t".repeat(indent + 1)}\"connIn\":{\n");
-        for (var connIn:this.connIn.entrySet()){
-            finalString.append(STR."\{"\t".repeat(indent + 2)}\"\{connIn.getKey()}\":\{connIn.getValue()}");
-            if (connIn!=this.connIn.entrySet().stream().toList().getLast()){
-                finalString.append(",\n");
+        finalString.repeat("\t", indent-1).append("\"").append(this.id).append("\":{\n").repeat("\t", indent + 1).append("\"connIn\":");
+        if (connIn.isEmpty()){
+            finalString.append("{},\n");
+        }else {
+            finalString.append("{\n");
+            for (var connIn : this.connIn.entrySet()) {
+                finalString.repeat("\t", indent + 2).append("\"").append(connIn.getKey()).append("\":").append(connIn.getValue());
+                if (connIn != this.connIn.entrySet().stream().toList().getLast()) {
+                    finalString.append(",\n");
+                }
             }
+            finalString.append("\n").repeat("\t", indent + 1).append("},\n");
         }
-        finalString.append(STR."\n\{"\t".repeat(indent + 1)}},\n\{"\t".repeat(indent + 1)}\"connOut\":\"\{this.connOut}\",\n\{"\t".repeat(indent + 1)}\"bias\" : \{this.bias}\n\{"\t".repeat(indent)}}");
+        finalString.repeat("\t", indent + 1).append("\"connOut\":\"").append(this.connOut).append("\",\n").repeat("\t", indent + 1).append("\"bias\" : ").append(this.bias).append("\n").repeat("\t", indent).append("}");
         return finalString.toString();
     }
 
@@ -109,5 +116,9 @@ public class Neuron {
         INPUT,
         OUTPUT,
         HIDDEN
+    }
+
+    public Neuron copy(){
+        return new Neuron(new ArrayList<>(this.getConnIn().keySet()),this.getConnOut(),this.getBias(),new ArrayList<>(this.getConnIn().values()),this.getId(),this.getType());
     }
 }

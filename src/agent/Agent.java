@@ -1,7 +1,10 @@
 package src.agent;
 
 import src.game.Engine;
+import src.game.Window;
+
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static src.agent.Neuron.NeuronType.INPUT;
 import static src.agent.Neuron.NeuronType.OUTPUT;
@@ -11,11 +14,13 @@ public class Agent {
     ArrayList<Neuron> neurons= new ArrayList<>(0);
     Engine engine;
     ArrayList<ArrayList<String>> sortedNeurons=new ArrayList<>();
-    private int hidden=0;
+    private final static AtomicInteger hidden=new AtomicInteger(0);
     public float score;
     public String lastMove;
     private static int numberOfGames=50;
     public int size;
+    private String[] parents=new String[2];
+    private final int initialGen;
 
     public Agent(int size){
         this.size=size;
@@ -23,12 +28,12 @@ public class Agent {
         int inNeurons= (int) Math.pow(size,2);
         ArrayList<String> inIds=new ArrayList<>();
         for (int i = 0; i < inNeurons; i++) {
-            inIds.add(STR."in\{"0".repeat(Integer.toString(inNeurons).length() - Integer.toString(i).length())}"+i);
+            inIds.add("in"+"0".repeat(Integer.toString(inNeurons).length() - Integer.toString(i).length())+i);
         }
         int outNeurons=4;
         ArrayList<String> outIds=new ArrayList<>();
         for (int i = 0; i < outNeurons; i++) {
-            outIds.add(STR."out\{"0".repeat(Integer.toString(outNeurons).length() - Integer.toString(i).length())}"+i);
+            outIds.add("out"+i);
         }
         for (String id: outIds){
             neurons.add(new Neuron(inIds,new ArrayList<>(),id, OUTPUT));
@@ -37,18 +42,75 @@ public class Agent {
             neurons.add(new Neuron(new ArrayList<>(),outIds,id, INPUT));
         }
         sortNeurons();
+        this.parents=new String[]{"Creator","Program Runner"};
+        this.initialGen=0;
     }
-    public Agent(Agent parent){
+    public Agent(Agent parent, Window window){
         for (Neuron neuron: parent.neurons){
-            this.neurons.add(new Neuron(new ArrayList<>(neuron.getConnIn().keySet()),neuron.getConnOut(),neuron.getBias(),new ArrayList<>(neuron.getConnIn().values()),neuron.getId(),neuron.getType()));
+            this.neurons.add(neuron.copy());
         }
-        this.hidden= parent.hidden;
         this.size= parent.size;
         this.engine=new Engine(parent.size);
         this.score=0;
         this.lastMove="";
         this.mutate();
         this.sortNeurons();
+        this.parents=new String[]{"Creator","agent"+window.agents.indexOf(parent)+"gen"+parent.initialGen};
+        this.initialGen=window.generations;
+    }
+    public Agent(Agent parent1,Agent parent2,Window window){
+        ArrayList<Neuron> neurons=new ArrayList<>();
+        ArrayList<String> ids=new ArrayList<>();
+        for (Neuron neuron:parent1.neurons){
+            neurons.add(neuron.copy());
+            ids.add(neuron.getId());
+        }
+        for (Neuron neuron:parent2.neurons){
+            if (ids.contains(neuron.getId())){
+                Neuron neuron1=getWithId(neuron.getId(),neurons);
+                neuron1.setBias((neuron1.getBias()+ neuron.getBias())/2+new Random().nextFloat( -0.01f, 0.01f));
+                for (String conn:neuron.getConnOut()){
+                    if (!neuron1.getConnOut().contains(conn)){
+                        neuron1.getConnOut().add(conn);
+                    }
+                }
+                for (String conn:neuron.getConnIn().keySet()){
+                    if (neuron1.getConnIn().containsKey(conn)) {
+                        neuron1.getConnIn().replace(conn,(neuron.getConnIn().get(conn)+neuron1.getConnIn().get(conn))/2+new Random().nextFloat(-0.01f,0.01f));
+                    } else {
+                        neuron1.getConnIn().put(conn,neuron.getConnIn().get(conn));
+                    }
+                }
+            }else{
+                neurons.add(neuron.copy());
+                ids.add(neuron.getId());
+            }
+        }
+        for (Neuron neuron : neurons) {
+            ArrayList<String> remove=new ArrayList<>();
+            neuron.getConnIn().forEach((s,_)-> {
+                if (getWithId(s, neurons) == null) {
+                    remove.add(s);
+                }
+            });
+            remove.forEach((s)->neuron.getConnIn().remove(s));
+            neuron.getConnOut().removeIf(s->getWithId(s, neurons) == null);
+        }
+        this.neurons=neurons;
+        this.size=parent1.size;
+        this.engine=new Engine(size);
+        this.score=0;
+        this.lastMove="";
+        this.mutate();
+        for (Neuron neuron : neurons) {
+            ArrayList<String> remove=new ArrayList<>();
+            neuron.getConnIn().forEach((conn,_)->{if(getWithId(conn,neurons)==null){remove.add(conn);}});
+            remove.forEach(s -> neuron.getConnIn().remove(s));
+            neuron.getConnOut().removeIf(conn->getWithId(conn,neurons)==null);
+        }
+        this.sortNeurons();
+        this.parents=new String[]{"agent"+window.agents.indexOf(parent1)+"gen"+parent1.initialGen,"agent"+window.agents.indexOf(parent2)+"gen"+parent2.initialGen};
+        this.initialGen=window.generations;
     }
 
     public void sortNeurons(){
@@ -143,8 +205,12 @@ public class Agent {
                         neurons.remove(neuron);
                     }
                 }else {
-                    System.out.println(STR."\{neuron.getId()} \{neuron.getConnIn()} \{neuron.getConnOut()}");
+                    neuron.getConnOut().forEach(conn->getWithId(conn).getConnIn().remove(neuron.getId()));
+                    neuron.getConnIn().keySet().forEach(conn->getWithId(conn).getConnOut().remove(neuron.getId()));
+                    System.out.println(neuron.getId()+" "+neuron.getConnIn()+" "+neuron.getConnOut());
                     System.out.println("There might bge a loop present");
+                    neurons.remove(neuron);
+                    this.neurons.remove(neuron);
                     i+=1;
                 }
 
@@ -188,6 +254,14 @@ public class Agent {
                 return neuron;
             }
         }
+        throw new RuntimeException("The neuron with id:"+id+" was not found in agent "+ this.toString(0));
+    }
+    Neuron getWithId(String id, List<Neuron> neurons) {
+        for (Neuron neuron:neurons){
+            if (Objects.equals(neuron.getId(), id)){
+                return neuron;
+            }
+        }
         return null;
     }
 
@@ -212,8 +286,8 @@ public class Agent {
             neuron.getConnIn().put(conn,neuron.getConnIn().get(conn)+rand.nextFloat(-0.25f,0.25f));
         } else if (chance<=0.625) {
             //Adds 1 new neuron
-            String newId= STR."hid\{this.hidden + 1}";
-            this.hidden++;
+            String newId= "hid"+(hidden.get()+1);
+            hidden.getAndIncrement();
             List<String> conns= new ArrayList<>(neuron.getConnIn().keySet());
             conns.addAll(neuron.getConnOut());
             String conn= getRandom(conns);
@@ -334,32 +408,38 @@ public class Agent {
         this.engine=engine;
     }
 
-    public void calculateScore(int maxMoves){
+    public boolean calculateScore(int maxMoves){
         score=0;
+        int setReturn=0;
         for (int i = 0; i < numberOfGames; i++) {
             for (int j = 0; j < maxMoves & !engine.lose(); j++) {
                 if(!outputMove()){
                     score-=10;
                     break;}
+                if (j==maxMoves-1){
+                    setReturn++;
+                }
             }
             int gameScore=engine.getPoints();
             score+= gameScore;
             engine.reset();
         }
         score/=numberOfGames;
+        return setReturn>numberOfGames*0.7;
     }
 
     public String toString(int indent){
         StringBuilder finalString=new StringBuilder();
-        finalString.append(STR."\{"\t".repeat(indent)}{\n\{"\t".repeat(indent)}\"agent\":{\n\{"\t".repeat(indent + 1)}\"sorted neurons\":");
-        finalString.append(STR."\"\{sortedNeurons.toString()}\",\n\{"\t".repeat(indent + 1)}\"neurons\":{");
+        indent++;
+        finalString.repeat("\t", indent-1).append("{\n").repeat("\t", indent).append("\"agent\":{\n").repeat("\t", indent + 1).append("\"sorted neurons\":");
+        finalString.append("\"").append(sortedNeurons.toString()).append("\",\n").repeat("\t", indent + 1).append("\"neurons\":{");
         for (Neuron neuron:neurons){
-            finalString.append(STR."\n\{"\t".repeat(indent)}\{neuron.toString(indent + 2)}");
+            finalString.append("\n").repeat("\t", indent).append(neuron.toString(indent + 2));
             if(neurons.indexOf(neuron)< neurons.size()-1){
                 finalString.append(",");
             }
         }
-        finalString.append(STR."\n\{"t".repeat(indent)}}\{"\t".repeat(indent + 1)}}\{"\t".repeat(indent)}\n}");
+        finalString.append("\n").repeat("\t", indent+1).append("},\n").repeat("\t", indent+1).append("\"parents\": \"").append(Arrays.toString(parents)).append("\"\n").repeat("\t", indent).append("}").repeat("\t", indent).append("\n}");
         return finalString.toString();
     }
 
@@ -396,4 +476,5 @@ public class Agent {
     public static void setNumberOfGames(int numberOfGames) {
         Agent.numberOfGames = numberOfGames;
     }
+
 }
