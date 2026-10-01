@@ -13,7 +13,7 @@ import static src.util.ListFunctions.*;
 public class Agent {
     ArrayList<Neuron> neurons= new ArrayList<>(0);
     Engine engine;
-    ArrayList<ArrayList<String>> sortedNeurons=new ArrayList<>();
+    public ArrayList<ArrayList<String>> sortedNeurons=new ArrayList<>();
     private final static AtomicInteger hidden=new AtomicInteger(0);
     public float score;
     public String lastMove;
@@ -21,8 +21,9 @@ public class Agent {
     public int size;
     private String[] parents=new String[2];
     private final int initialGen;
+    private final String name;
 
-    public Agent(int size){
+    public Agent(int size,int number){
         this.size=size;
         engine=new Engine(size);
         int inNeurons= (int) Math.pow(size,2);
@@ -43,7 +44,8 @@ public class Agent {
         }
         sortNeurons();
         this.parents=new String[]{"Creator","Program Runner"};
-        this.initialGen=0;
+        this.initialGen=-1;
+        this.name="agent"+number+"gen"+initialGen;
     }
     public Agent(Agent parent, Window window){
         for (Neuron neuron: parent.neurons){
@@ -55,8 +57,9 @@ public class Agent {
         this.lastMove="";
         this.mutate();
         this.sortNeurons();
-        this.parents=new String[]{"Creator","agent"+window.agents.indexOf(parent)+"gen"+parent.initialGen};
+        this.parents=new String[]{"Creator", parent.name};
         this.initialGen=window.generations;
+        this.name="agent"+window.agents.size()+"gen"+initialGen;
     }
     public Agent(Agent parent1,Agent parent2,Window window){
         ArrayList<Neuron> neurons=new ArrayList<>();
@@ -109,8 +112,16 @@ public class Agent {
             neuron.getConnOut().removeIf(conn->getWithId(conn,neurons)==null);
         }
         this.sortNeurons();
-        this.parents=new String[]{"agent"+window.agents.indexOf(parent1)+"gen"+parent1.initialGen,"agent"+window.agents.indexOf(parent2)+"gen"+parent2.initialGen};
+        this.parents=new String[]{parent1.name,parent2.name};
         this.initialGen=window.generations;
+        this.name="agent"+window.agents.size()+"gen"+initialGen;
+    }
+
+    private Agent(ArrayList<Neuron> neurons,String[] parents,String name){
+        this.parents=parents;
+        this.neurons=neurons;
+        this.name=name;
+        this.initialGen= Integer.parseInt(name.substring(name.lastIndexOf("gen")).replace("gen","").strip());
     }
 
     public void sortNeurons(){
@@ -233,7 +244,7 @@ public class Agent {
         calculateOutput();
         ArrayList<Neuron> outputNeurons=retainNeurons(this.neurons,OUTPUT);
         try {
-            outputNeurons.sort(Comparator.comparingDouble(Neuron::getValue));
+            outputNeurons.sort((a,b)-> Double.compare(b.getValue(), a.getValue()));
         }catch (Exception _){
             for (Neuron neuron:outputNeurons){
                 System.out.println(neuron.getValue());
@@ -248,7 +259,7 @@ public class Agent {
         };
     }
 
-    Neuron getWithId(String id) {
+    public Neuron getWithId(String id) {
         for (Neuron neuron:this.neurons){
             if (Objects.equals(neuron.getId(), id)){
                 return neuron;
@@ -341,7 +352,7 @@ public class Agent {
                 neuron2.getConnIn().remove(neuron.getId());
             }
             this.neurons.remove(neuron);
-        } else if (chance<=0.875) {
+        } else if (chance<=0.9) {
             //Removes a random connection
             if (neuron.getConnIn().size()<2 || neuron.getConnOut().size()<2){return;}
             List<String> conns= new ArrayList<>(neuron.getConnIn().keySet().stream().toList());
@@ -358,6 +369,7 @@ public class Agent {
                 neuron.getConnOut().remove(conn);
             }
         } else if (chance <= 1) {
+            //Adds a random connection
             Neuron neuron2=getRandom(this.neurons);
             if (neuron2==neuron){return;}
             if (neuron.getType()== INPUT){
@@ -428,10 +440,14 @@ public class Agent {
         return setReturn>numberOfGames*0.7;
     }
 
+    public String toString(){
+        return name;
+    }
+
     public String toString(int indent){
         StringBuilder finalString=new StringBuilder();
         indent++;
-        finalString.repeat("\t", indent-1).append("{\n").repeat("\t", indent).append("\"agent\":{\n").repeat("\t", indent + 1).append("\"sorted neurons\":");
+        finalString.repeat("\t", indent - 1).append("{\n").repeat("\t", indent).append("\"agent\":{\n").repeat("\t", indent + 1).append("\"name\":\"").append(name).append("\",\n").repeat("\t", indent + 1).append("\"sorted neurons\":");
         finalString.append("\"").append(sortedNeurons.toString()).append("\",\n").repeat("\t", indent + 1).append("\"neurons\":{");
         for (Neuron neuron:neurons){
             finalString.append("\n").repeat("\t", indent).append(neuron.toString(indent + 2));
@@ -477,4 +493,33 @@ public class Agent {
         Agent.numberOfGames = numberOfGames;
     }
 
+    public static Agent fromString(String jsonString) throws Exception {
+        if (!jsonString.contains("\"agent\":")){throw new Exception("This string is not an agent: "+jsonString);}
+        jsonString=jsonString.replace("\"agent:\"","").replace(" ","").replace("\t","").replace("\n","");
+        int startIndex=jsonString.indexOf("\"name");
+        String name=jsonString.substring(startIndex,jsonString.substring(startIndex).indexOf(",")+startIndex).replace("\"","").replace("name","").replace(":","");
+        jsonString=jsonString.replace(name,"");
+        startIndex=jsonString.indexOf("\"neurons");
+        String neuronsString=jsonString.substring(startIndex,jsonString.substring(startIndex).indexOf("},\"pare")+startIndex);
+        jsonString=jsonString.replace(neuronsString,"");
+        startIndex=jsonString.indexOf("\"parents");
+        String parentsString=jsonString.substring(startIndex,jsonString.substring(startIndex).indexOf("]\"")+startIndex);
+        String[] parents=parentsString.replace("[","").replace("]","").replace("\"","").replace("parents:","").strip().split(",");
+        ArrayList<String> neuronStrings=new ArrayList<>();
+        neuronsString=neuronsString.replace("\"neurons\":{","");
+        while (neuronsString.indexOf("}")!=neuronsString.lastIndexOf("}")){
+            int start=neuronsString.indexOf("\"");
+            int end=neuronsString.substring(neuronsString.indexOf("}")+1).indexOf("}")+neuronsString.indexOf("}")+2;
+            String neuronString=neuronsString.substring(start,end);
+            if (neuronString.isEmpty())throw new RuntimeException("This agent isn't properly constructed "+start+" "+end);
+            neuronsString=neuronsString.replace(neuronString,"");
+            neuronStrings.add(neuronString);
+        }
+        ArrayList<Neuron> neurons=new ArrayList<>();
+        for (String neuronString : neuronStrings) {
+            neurons.add(Neuron.fromString(neuronString));
+        }
+
+        return new Agent(neurons,parents,name);
+    }
 }

@@ -1,6 +1,7 @@
 package src.game;
 
 import src.agent.Agent;
+import src.agent.Neuron;
 import src.util.LineGraph;
 
 import javax.swing.*;
@@ -97,6 +98,14 @@ public class Window extends JFrame implements ActionListener {
     private boolean stopRequested=false;
     private boolean generating=false;
     private int additionalMoves=0;
+    private final JPanel neuralNetVis=new JPanel(){
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            paintNeuralNet();
+            Window.this.update();
+        }
+    };
 
     public Window(int size){
         JComboBox<FunctionType> functionTypeSelector = new JComboBox<>();
@@ -161,7 +170,7 @@ public class Window extends JFrame implements ActionListener {
             minMovesLabel.setText(String.valueOf(minMoves));
         });
         runSelector.addItemListener(itemEvent->{
-            if (itemEvent.getStateChange()== ItemEvent.DESELECTED){genSelector.setVisible(false);return;}
+            if (itemEvent.getStateChange()== ItemEvent.DESELECTED){return;}
             genSelector.removeAllItems();
             File run=new File("src\\generated\\"+runSelector.getSelectedItem());
             File[] generation=run.listFiles();
@@ -172,9 +181,15 @@ public class Window extends JFrame implements ActionListener {
             update(getGraphics());
         });
         agentSelector.addItemListener(_->{
-            engine=((Agent) Objects.requireNonNull(agentSelector.getSelectedItem())).getEngine();
+            if (agentSelector.getSelectedItem() == null) {
+                engine = ownEngine;
+                currentAgent=0;
+            } else {
+                engine = ((Agent) (agentSelector.getSelectedItem())).getEngine();
+                currentAgent=agents.indexOf((Agent) agentSelector.getSelectedItem());
+                neuralNetVis.update(neuralNetVis.getGraphics());
+            }
             update();
-            currentAgent=agents.indexOf(((Agent) Objects.requireNonNull(agentSelector.getSelectedItem())));
         });
         File generated=new File("src\\generated");
         if (!generated.mkdir()){
@@ -214,125 +229,43 @@ public class Window extends JFrame implements ActionListener {
         maxScoreLabel.setBackground(Color.cyan);
         maxScoreLabel.setText("Maximum Score Achieved: 0");
         maxScoreLabel.setOpaque(true);
-        startButton.setBounds(230,550,100,30);
-        startButton.setText("Start");
-        startButton.setToolTipText("Starts a new run/Does a new generation");
-        startButton.setVisible(true);
-        resetButton.setBounds(130,550,100,30);
-        resetButton.setText("Reset");
-        resetButton.setToolTipText("Resets the current game to a begin state");
-        resetButton.setVisible(true);
-        autoGen.setBounds(30,550,100,30);
-        autoGen.setText("Auto Gen");
-        autoGen.setToolTipText("Enables/Disables automatic running of generations");
-        autoGen.setVisible(true);
-        stopSim.setBounds(330,520,100,30);
-        stopSim.setText("Stop Sim");
-        stopSim.setToolTipText("Stops the current run and writes the final generation and scores to files");
-        stopSim.setVisible(true);
-        switchRepopulation.setBounds(330,550,100,30);
-        switchRepopulation.setText("Sexual");
-        switchRepopulation.setToolTipText("Switches what type of repopulation is used: sexual (2 parents) or non-sexual(1 parent)");
-        switchRepopulation.setVisible(true);
-        updateButton.setBounds(230,520,100,30);
-        updateButton.setText("Update");
-        updateButton.setToolTipText("Advances the current game 1 step if an agent is selected");
-        updateButton.setVisible(true);
-        ownEngineButton.setBounds(130,520,100,30);
-        ownEngineButton.setText("Own Game");
-        ownEngineButton.setToolTipText("Return to your own game so you can play a bit");
-        ownEngineButton.setVisible(true);
-        printScoresButton.setBounds(30,520,100,30);
-        printScoresButton.setText("Print Score");
-        printScoresButton.setToolTipText("Prints the current generation and scores to files");
-        printScoresButton.setVisible(true);
-        runSelector.setBounds(30,460,400,30);
-        runSelector.setToolTipText("Select which run you want to continue from");
-        runSelector.setVisible(true);
-        genSelector.setBounds(30,490,400,30);
-        genSelector.setToolTipText("Select which generation you want to continue from");
-        genSelector.setVisible(true);
-        functionTypeSelector.setBounds(30,640,100,20);
-        functionTypeSelector.setVisible(true);
-        numberOfAgentsBar.setBlockIncrement(10);
-        numberOfAgentsBar.setMinimum(10);
-        numberOfAgentsBar.setMaximum(510);
-        numberOfAgentsBar.setToolTipText("Number Of Agents Each Generation");
-        numberOfAgentsBar.setBounds(30,580,375,20);
-        numberOfAgentsBar.setVisible(true);
-        numberOfAgentsBar.setValue(100);
-        numberOfAgentsLabel.setBounds(405,580,25,20);
-        numberOfAgentsLabel.setText(String.valueOf(numberOfAgents));
-        numberOfAgentsLabel.setVisible(true);
-        populationProportionBar.setBlockIncrement(5);
-        populationProportionBar.setMinimum(10);
-        populationProportionBar.setMaximum(110);
-        populationProportionBar.setToolTipText("Proportion of the population advancing to the next generation");
-        populationProportionBar.setBounds(30,600,375,20);
-        populationProportionBar.setVisible(true);
-        populationProportionBar.setValue(50);
-        populationProportionLabel.setBounds(405,600,25,20);
-        populationProportionLabel.setText(String.valueOf(populationProportion));
-        populationProportionLabel.setVisible(true);
-        numberOfGamesBar.setBlockIncrement(5);
-        numberOfGamesBar.setMinimum(1);
-        numberOfGamesBar.setMaximum(210);
-        numberOfGamesBar.setToolTipText("Number of games each agents plays for its fitness");
-        numberOfGamesBar.setBounds(30,620,375,20);
-        numberOfGamesBar.setVisible(true);
-        numberOfGamesBar.setValue(50);
-        numberOfGamesLabel.setBounds(405,620,25,20);
-        int numberOfGames = 50;
-        numberOfGamesLabel.setText(String.valueOf(numberOfGames));
-        numberOfGamesLabel.setVisible(true);
-        functionTypeValueBar.setBlockIncrement(1);
-        functionTypeValueBar.setMinimum(5);
-        functionTypeValueBar.setMaximum(25);
-        functionTypeValueBar.setToolTipText("Changes the bias of selection.\nThe higher the stronger the bias is");
-        functionTypeValueBar.setBounds(130,640,275,20);
-        functionTypeValueBar.setVisible(true);
-        functionTypeValueBar.setValue(5);
-        functionTypeValueLabel.setBounds(405,640,25,20);
-        functionTypeValueLabel.setText(String.valueOf(functionTypeValue));
-        functionTypeValueLabel.setVisible(true);
-        offsetBar.setBlockIncrement(10);
-        offsetBar.setMinimum(0);
-        offsetBar.setMaximum(110);
-        offsetBar.setToolTipText("Changes the offset of the maximum amount of moves an agent can make each game");
-        offsetBar.setBounds(30,660,375,20);
-        offsetBar.setVisible(true);
-        offsetBar.setValue(10);
-        offsetLabel.setBounds(405,660,25,20);
-        offsetLabel.setText(String.valueOf(offset));
-        offsetLabel.setVisible(true);
-        proportionalBar.setBlockIncrement(1);
-        proportionalBar.setMinimum(1);
-        proportionalBar.setMaximum(20);
-        proportionalBar.setToolTipText("Changes the amount the number of generations influences the amount of moves that can be made. The higher this number is the lower the impact.");
-        proportionalBar.setBounds(30,680,375,20);
-        proportionalBar.setVisible(true);
-        proportionalBar.setValue(3);
-        proportionalLabel.setBounds(405,680,25,20);
-        proportionalLabel.setText(String.valueOf(proportional));
-        proportionalLabel.setVisible(true);
-        minMovesBar.setBlockIncrement(10);
-        minMovesBar.setMinimum(10);
-        minMovesBar.setMaximum(210);
-        minMovesBar.setToolTipText("Changes the minimum amount of moves an agent can do");
-        minMovesBar.setBounds(30,700,375,20);
-        minMovesBar.setVisible(true);
-        minMovesBar.setValue(50);
-        minMovesLabel.setBounds(405,700,25,20);
-        minMovesLabel.setText(String.valueOf(minMoves));
-        minMovesLabel.setVisible(true);
-        agentSelector.setBounds(30,720,400,20);
-        agentSelector.setToolTipText("Selects an agents to be shown and inspected");
-        agentSelector.setVisible(true);
-
+        add(startButton,"Starts a new run/Does a new generation",230,550,100,30,"Start");
+        add(resetButton,"Resets the current game to a begin state",130,550,100,30,"Reset");
+        add(autoGen,"Enables/Disables automatic running of generations",30,550,100,30,"Auto Gen");
+        add(stopSim,"Stops the current run and writes the final generation and scores to files",330,520,100,30,"Stop Sim");
+        add(switchRepopulation,"Switches what type of repopulation is used: sexual (2 parents) or non-sexual(1 parent)",330,550,100,30,"Sexual");
+        add(updateButton,"Advances the current game 1 step if an agent is selected",230,520,100,30,"Update");
+        add(ownEngineButton,"Return to your own game so you can play a bit",130,520,100,30,"Own Game");
+        add(printScoresButton,"Prints the current generation and scores to files",30,520,100,30,"Print Score");
+        add(functionTypeSelector,null,30,640,100,20,null);
+        barStuff(numberOfAgentsBar,10,10,510,100);
+        add(runSelector,"Select which run you want to continue from",30,460,400,30,null);
+        add(genSelector,"Select which generation you want to continue from",30,490,400,30,null);
+        add(numberOfAgentsBar,"Number Of Agents Each Generation",30,580,375,20,null);
+        add(numberOfAgentsLabel,null,405,580,25,20,String.valueOf(numberOfAgents));
+        barStuff(populationProportionBar,5,10,110,50);
+        add(populationProportionBar,"Proportion of the population advancing to the next generation",30,600,375,20,null);
+        add(populationProportionLabel,null,405,600,25,20,String.valueOf(populationProportion));
+        barStuff(numberOfGamesBar,5,1,210,50);
+        add(numberOfGamesBar,"Number of games each agents plays for its fitness",30,620,375,20,null);
+        add(numberOfGamesLabel,null,405,620,25,20,String.valueOf(numberOfGamesBar.getValue()));
+        barStuff(functionTypeValueBar,1,5,25,5);
+        add(functionTypeValueBar,"Changes the bias of selection.\nThe higher the stronger the bias is",130,640,275,20,null);
+        add(functionTypeValueLabel,null,405,640,25,20,String.valueOf(functionTypeValue));
+        barStuff(offsetBar,10,0,110,10);
+        add(offsetBar,"Changes the offset of the maximum amount of moves an agent can make each game",30,660,375,20,null);
+        add(offsetLabel,null,405,660,25,20,String.valueOf(offset));
+        barStuff(proportionalBar,1,1,20,3);
+        add(proportionalBar,"Changes the amount the number of generations influences the amount of moves that can be made. The higher this number is the lower the impact.",
+                30,680,375,20,null);
+        add(proportionalLabel,null,405,680,25,20, String.valueOf(proportional));
+        barStuff(minMovesBar,10,10,210,50);
+        add(minMovesBar,"Changes the minimum amount of moves an agent can do",30,700,375,20,null);
+        add(minMovesLabel,null,405,700,25,20,String.valueOf(minMoves));
+        add(agentSelector,"Selects an agents to be shown and inspected",30,720,400,20,null);
+        add(graph,null,430,10,getWidth()-450,500,null);
+        add(neuralNetVis,null,430,520,getWidth()-450,this.getHeight()-graph.getHeight()-20,null);
         autoGenTimer.setRepeats(false);
-
-        graph.setBounds(430,10,getWidth()-450,500);
-        graph.setVisible(true);
 
         for (int i = 0; i < engine.size; i++) {
             for (int j = 0; j < engine.size; j++) {
@@ -358,35 +291,29 @@ public class Window extends JFrame implements ActionListener {
         switchRepopulation.addActionListener(this);
         this.add(label);
         this.setVisible(true);
-        this.add(resetButton);
-        this.add(startButton);
-        this.add(updateButton);
-        this.add(ownEngineButton);
-        this.add(autoGen);
-        this.add(stopSim);
-        this.add(runSelector);
-        this.add(genSelector);
-        this.add(printScoresButton);
-        this.add(numberOfAgentsBar);
-        this.add(numberOfAgentsLabel);
-        this.add(populationProportionBar);
-        this.add(populationProportionLabel);
-        this.add(numberOfGamesBar);
-        this.add(numberOfGamesLabel);
-        this.add(functionTypeValueBar);
-        this.add(functionTypeValueLabel);
-        this.add(functionTypeSelector);
-        this.add(minMovesLabel);
-        this.add(minMovesBar);
-        this.add(proportionalLabel);
-        this.add(proportionalBar);
-        this.add(offsetLabel);
-        this.add(offsetBar);
-        this.add(switchRepopulation);
-        this.add(graph);
-        this.add(agentSelector);
         this.engine=ownEngine;
         update();
+    }
+
+    private static void barStuff(JScrollBar bar,int increment,int min,int max,int start) {
+        bar.setBlockIncrement(increment);
+        bar.setMinimum(min);
+        bar.setMaximum(max);
+        bar.setValue(start);
+    }
+
+    private void add(JComponent comp,String toolTip,int xStart,int yStart,int width,int height,String text){
+        super.add(comp);
+        if (toolTip!=null) comp.setToolTipText(toolTip);
+        if(text!=null) {
+            if (comp instanceof JButton) {
+                ((JButton) comp).setText(text);
+            } else if(comp instanceof JLabel){
+                ((JLabel) comp).setText(text);
+            }
+        }
+        comp.setBounds(xStart,yStart,width,height);
+        comp.setVisible(true);
     }
 
     public void update(){
@@ -452,6 +379,10 @@ public class Window extends JFrame implements ActionListener {
             maxScoreLabel.setText("Maximum Score Achieved:"+ (float)maxScore+", Moves: "+moves);
             update();
         });
+        agentSelector.removeAllItems();
+        for (Agent agent:agents){
+            agentSelector.addItem(agent);
+        }
         engine=agents.getFirst().getEngine();
         newGeneration();
         generations++;
@@ -459,7 +390,7 @@ public class Window extends JFrame implements ActionListener {
 
     private void startSimulation(){
         for (int i = 0; i < numberOfAgents; i++) {
-            agents.add(new Agent(engine.size));
+            agents.add(new Agent(engine.size,i));
             agentSelector.addItem(agents.getLast());
         }
         this.requestFocus();
@@ -595,5 +526,44 @@ public class Window extends JFrame implements ActionListener {
         QUADRATIC,
         CUBE,
         CUSTOM
+    }
+
+    private void paintNeuralNet(){
+        if (agentSelector.getSelectedItem()==null)return;
+        Agent agent= (Agent) agentSelector.getSelectedItem();
+
+        Map<String,Integer[]> locations=new HashMap<>();
+        ArrayList<ArrayList<String>> sortedNeurons=agent.sortedNeurons;
+        Graphics2D g2= (Graphics2D) neuralNetVis.getGraphics();
+
+        int xSpacing=(neuralNetVis.getWidth())/sortedNeurons.size();
+        int x=xSpacing/2;
+        for (ArrayList<String> sortedNeuronLayer : sortedNeurons) {
+            int ySpacing=(neuralNetVis.getHeight()-20)/sortedNeuronLayer.size();
+            int y=ySpacing/2;
+            for (String sortedNeuron : sortedNeuronLayer) {
+                locations.put(sortedNeuron,new Integer[]{x,y});
+                y+=ySpacing;
+            }
+            x+=xSpacing;
+        }
+        //Draws Connections
+        for (int i=1;i<sortedNeurons.size();i++){
+            for (String s : sortedNeurons.get(i)) {
+                Neuron neuron= agent.getWithId(s);
+                neuron.getConnIn().forEach((id,weight)->{
+                    g2.setColor((weight<0?Color.RED:Color.GREEN));
+                    g2.setStroke(new BasicStroke(5*Math.abs(weight)));
+                    g2.drawLine(locations.get(id)[0],locations.get(id)[1],locations.get(s)[0],locations.get(s)[1]);
+                });
+            }
+        }
+        //Draws circles for each Neuron
+        g2.setColor(Color.BLACK);
+        g2.setStroke(new BasicStroke(2));
+        for (Integer[] value : locations.values()) {
+            g2.fillOval(value[0]-5,value[1]-5,10,10);
+        }
+
     }
 }

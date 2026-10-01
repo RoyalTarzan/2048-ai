@@ -1,10 +1,10 @@
 package src.agent;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
+/**
+ * A helper class to be able to make a neural net a lot easier.
+ */
 public class Neuron {
     private final NeuronType type;
     private float bias;
@@ -54,6 +54,9 @@ public class Neuron {
         return value;
     }
 
+    /**
+     * Calculates the value of this Neuron based on the inputs or the cell it's connected to.
+     **/
     public void calculateValue(Agent brain){
         if(this.type==NeuronType.INPUT){
             int i= Integer.parseInt(this.id.replace("in",""));
@@ -120,5 +123,34 @@ public class Neuron {
 
     public Neuron copy(){
         return new Neuron(new ArrayList<>(this.getConnIn().keySet()),this.getConnOut(),this.getBias(),new ArrayList<>(this.getConnIn().values()),this.getId(),this.getType());
+    }
+
+    public static Neuron fromString(String neuronString) {
+        String id=neuronString.substring(neuronString.indexOf("\""),neuronString.indexOf(":"));
+        NeuronType type=id.contains("in")?NeuronType.INPUT:(id.contains("out")?NeuronType.OUTPUT:NeuronType.HIDDEN);
+        neuronString=neuronString.replace(id,"");
+        id=id.replace("\"","").replace(":","");
+        String[] connInsString=neuronString.substring(neuronString.indexOf("\"connIn"),neuronString.substring(neuronString.indexOf("\"connIn")).indexOf("}")+2)
+                .replace("\"","")
+                .replace("connIn","")
+                .replaceFirst(":","")
+                .replace("}","")
+                .replace("{","").split(",");
+        int start=neuronString.indexOf("\"bias");
+        String bias= (neuronString.substring(start,(!neuronString.substring(start).contains(",")?neuronString.substring(start).indexOf("}")+start:neuronString.substring(start).indexOf(",")+start))
+                .replace("\"","")
+                .replace("bias","").replace(":","").strip());
+        start=neuronString.indexOf("\"connOut");
+        String[] connOut=neuronString.substring(start,(neuronString.substring(start).contains("]\",")?neuronString.substring(start).indexOf("]\",")+start:neuronString.substring(start).indexOf("}")+start))
+                .replace("\"","").replace("connOut:","").replace("[","").replace("]","").split(",");
+        ArrayList<String> connIn=new ArrayList<>();
+        ArrayList<Float> weights=new ArrayList<>();
+        for (String connInString : connInsString) {
+            if (connInString.isEmpty()){continue;}
+            String[] connWeight=connInString.split(":");
+            connIn.add(connWeight[0].replace("\"","").strip());
+            weights.add(Float.valueOf(connWeight[1].strip()));
+        }
+        return new Neuron(connIn,new ArrayList<>(List.of(connOut)),Float.parseFloat(bias) ,weights,id,type);
     }
 }

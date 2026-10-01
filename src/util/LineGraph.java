@@ -73,7 +73,7 @@ public class LineGraph extends JPanel {
         dataPoints.get(compressedData)[0]=a;
         dataPoints.get(compressedData)[1]=b;
         dataPoints.get(compressedData)[2]=c;
-        dataPoints.subList(compressedData + 1, 10 + compressedData).clear();
+        dataPoints.subList(compressedData + 1, compressedData+10).clear();
     }
 
     public void addDataPoint(double[] value){
